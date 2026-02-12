@@ -25,7 +25,7 @@ export function HomeContent({ userName }: HomeContentProps) {
         <div className="mb-6 flex items-center gap-3">
           <Image src="/logo-white.png" alt="Klaserie Camps" width={56} height={32} className="drop-shadow-md" />
           <div>
-            <h1 className="text-xl font-bold text-white drop-shadow-md">WildTrack</h1>
+            <h1 className="text-xl font-bold text-white drop-shadow-md">Klaserie Camps</h1>
             <p className="text-sm text-white/70">Welcome back, {userName}</p>
           </div>
         </div>

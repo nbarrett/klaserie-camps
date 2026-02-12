@@ -21,7 +21,7 @@ export function LandingPage() {
             className="mb-4"
           />
           <h1 className="text-4xl font-light tracking-wide text-white">
-            WildTrack
+            Klaserie Camps
           </h1>
           <p className="mt-2 text-sm tracking-widest uppercase text-white/70">
             Klaserie Private Nature Reserve

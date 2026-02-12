@@ -8,7 +8,7 @@ import { AuthSessionProvider } from "~/app/_components/session-provider";
 import { Nav } from "~/app/_components/nav";
 
 export const metadata: Metadata = {
-  title: "WildTrack - Klaserie Camps",
+  title: "Klaserie Camps",
   description: "GPS wildlife tracking for Klaserie Private Nature Reserve",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };

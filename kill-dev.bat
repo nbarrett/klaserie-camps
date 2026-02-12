@@ -1,3 +1,3 @@
 @echo off
-REM Kill Wildtrack development processes (Windows batch launcher)
+REM Kill Klaserie Camps development processes (Windows batch launcher)
 powershell -ExecutionPolicy Bypass -File "%~dp0kill-dev.ps1"

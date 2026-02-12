@@ -1,4 +1,4 @@
-# WildTrack - Klaserie Camps
+# Klaserie Camps
 
 A real-time wildlife tracking web application for game guides at Klaserie Private Nature Reserve. Guides log into their lodge, start a game drive, and the app tracks their GPS route while they record wildlife sightings along the way. Each guide maintains a personal species checklist that updates automatically as they log sightings.
 

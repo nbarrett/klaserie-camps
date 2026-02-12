@@ -1,9 +1,9 @@
-# Kill Wildtrack (Klaserie Camps) development processes (Windows PowerShell)
+# Kill Klaserie Camps development processes (Windows PowerShell)
 
-Write-Host "Stopping Wildtrack development server..." -ForegroundColor Yellow
+Write-Host "Stopping Klaserie Camps development server..." -ForegroundColor Yellow
 
 # Kill processes on the dev port (default 3000)
-$port = if ($env:DEV_PORT) { [int]$env:DEV_PORT } else { 3000 }
+$port = if ($env:DEV_PORT) { [int]$env:DEV_PORT } else { 3002 }
 $connections = netstat -ano | Select-String ":$port.*LISTENING"
 foreach ($conn in $connections) {
     $procId = $conn.ToString().Split()[-1]

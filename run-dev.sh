@@ -109,7 +109,7 @@ port_in_use() {
 }
 
 check_port() {
-  local port="${DEV_PORT:-3000}"
+  local port="${DEV_PORT:-3002}"
   if port_in_use "localhost" "$port"; then
     fail "Port $port is already in use. Run ./kill-dev.sh first or set DEV_PORT to use a different port."
   fi
@@ -140,7 +140,7 @@ start_dev() {
   info "Starting Next.js dev server with Turbopack (logs: $DEV_LOG)..."
   (
     cd "$ROOT_DIR"
-    pnpm dev
+    pnpm dev --port "${DEV_PORT:-3002}"
   ) | tee -a "$DEV_LOG" &
   DEV_PID=$!
 }
@@ -153,17 +153,26 @@ cleanup() {
   fi
 }
 
+kill_existing() {
+  local kill_script="$ROOT_DIR/kill-dev.sh"
+  if [ -x "$kill_script" ]; then
+    info "Stopping any existing dev processes..."
+    "$kill_script" 2>/dev/null || true
+    sleep 1
+  fi
+}
+
 main() {
   ensure_node
   ensure_pnpm
   ensure_env_file
-  check_port
+  kill_existing
   install_deps
   push_schema
   start_dev
 
   trap cleanup EXIT INT TERM
-  info "Wildtrack dev server -> http://localhost:${DEV_PORT:-3000}"
+  info "Klaserie Camps dev server -> http://localhost:${DEV_PORT:-3002}"
   info "Press Ctrl+C to stop."
   wait
 }

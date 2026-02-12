@@ -1,0 +1,47 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+next-env.d.ts
+
+# production
+/build
+
+# prisma generated client
+/generated
+
+# misc
+.DS_Store
+*.pem
+
+# debug / dev logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+*.log
+
+# local env files
+# do not commit any .env files to git, except for the .env.example file
+.env
+.env*.local
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+
+# ide
+.idea
+.vscode
+
+# legacy npm lockfile (project uses pnpm)
+package-lock.json

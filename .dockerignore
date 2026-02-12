@@ -1,0 +1,17 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.idea
+.vscode
+*.local
+Dockerfile*
+fly.toml
+README.md
+generated
+.next
+.env
+prompts
+drives
+sightings
+maps

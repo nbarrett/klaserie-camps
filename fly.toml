@@ -1,0 +1,16 @@
+app = "klaserie-camps"
+primary_region = "jnb"
+
+[deploy]
+  release_command = "sh scripts/deploy-release.sh"
+
+[env]
+  PORT = "8080"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]

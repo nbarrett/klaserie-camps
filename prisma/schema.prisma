@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  GUIDE
+  VIEWER
+}
+
+model User {
+  id             String           @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  email          String           @unique
+  hashedPassword String
+  role           Role             @default(GUIDE)
+  lodgeId        String           @db.ObjectId
+  lodge          Lodge            @relation(fields: [lodgeId], references: [id])
+  driveSessions  DriveSession[]
+  sightings      Sighting[]
+  checklistItems ChecklistItem[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model Lodge {
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  name          String         @unique
+  latitude      Float
+  longitude     Float
+  users         User[]
+  driveSessions DriveSession[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Species {
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  commonName     String          @unique
+  scientificName String?
+  category       String
+  family         String?
+  sightings      Sighting[]
+  checklistItems ChecklistItem[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model DriveSession {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String     @db.ObjectId
+  user      User       @relation(fields: [userId], references: [id])
+  lodgeId   String     @db.ObjectId
+  lodge     Lodge      @relation(fields: [lodgeId], references: [id])
+  startedAt DateTime   @default(now())
+  endedAt   DateTime?
+  route     Json[]
+  sightings Sighting[]
+  notes     String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Sighting {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  driveSessionId String       @db.ObjectId
+  driveSession   DriveSession @relation(fields: [driveSessionId], references: [id])
+  userId         String       @db.ObjectId
+  user           User         @relation(fields: [userId], references: [id])
+  speciesId      String       @db.ObjectId
+  species        Species      @relation(fields: [speciesId], references: [id])
+  latitude       Float
+  longitude      Float
+  count          Int          @default(1)
+  notes          String?
+  imageUrl       String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model ChecklistItem {
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String        @db.ObjectId
+  user           User          @relation(fields: [userId], references: [id])
+  speciesId      String        @db.ObjectId
+  species        Species       @relation(fields: [speciesId], references: [id])
+  spotted        Boolean       @default(false)
+  firstSpottedAt DateTime?
+  sightingCount  Int           @default(0)
+  lastLatitude   Float?
+  lastLongitude  Float?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([userId, speciesId])
+}

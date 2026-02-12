@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { api } from "~/trpc/react";
+import { PageBackdrop } from "~/app/_components/page-backdrop";
 
 export default function DrivesPage() {
   const { data: session, status } = useSession();
@@ -18,41 +19,45 @@ export default function DrivesPage() {
   }
 
   return (
-    <main className="mx-auto max-w-md px-4 pb-20 pt-6 lg:max-w-5xl">
-      <h1 className="mb-4 text-xl font-bold text-brand-dark">Drive History</h1>
+    <main className="relative min-h-screen">
+      <PageBackdrop />
 
-      {drives.data && drives.data.items.length > 0 ? (
-        <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0 xl:grid-cols-3">
-          {drives.data.items.map((drive) => (
-            <Link
-              key={drive.id}
-              href={`/drives/${drive.id}`}
-              className="block rounded-lg bg-white p-4 shadow-sm transition hover:shadow-md"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium text-brand-dark">{drive.user.name}</div>
-                  <div className="text-sm text-brand-khaki">
-                    {drive._count.sightings} sighting{drive._count.sightings !== 1 ? "s" : ""}
+      <div className="relative z-10 mx-auto max-w-3xl px-4 pb-8 pt-6 sm:px-6 lg:px-8">
+        <h1 className="mb-4 text-xl font-bold text-white drop-shadow-md">Drive History</h1>
+
+        {drives.data && drives.data.items.length > 0 ? (
+          <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
+            {drives.data.items.map((drive) => (
+              <Link
+                key={drive.id}
+                href={`/drives/${drive.id}`}
+                className="block rounded-lg bg-white/80 p-4 shadow-sm backdrop-blur-sm transition hover:bg-white/90 hover:shadow-md"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-brand-dark">{drive.user.name}</div>
+                    <div className="text-sm text-brand-khaki">
+                      {drive._count.sightings} sighting{drive._count.sightings !== 1 ? "s" : ""}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm text-brand-dark/80">
+                      {new Date(drive.startedAt).toLocaleDateString("en-ZA")}
+                    </div>
+                    <div className="text-xs text-brand-khaki">
+                      {drive.endedAt ? "Completed" : "In Progress"}
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-sm text-brand-dark/80">
-                    {new Date(drive.startedAt).toLocaleDateString("en-ZA")}
-                  </div>
-                  <div className="text-xs text-brand-khaki">
-                    {drive.endedAt ? "Completed" : "In Progress"}
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      ) : drives.isLoading ? (
-        <p className="text-sm text-brand-khaki">Loading drives...</p>
-      ) : (
-        <p className="text-sm text-brand-khaki">No drives recorded yet.</p>
-      )}
+              </Link>
+            ))}
+          </div>
+        ) : drives.isLoading ? (
+          <p className="text-sm text-white/60">Loading drives...</p>
+        ) : (
+          <p className="text-sm text-white/60">No drives recorded yet.</p>
+        )}
+      </div>
     </main>
   );
 }

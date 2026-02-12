@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { api } from "~/trpc/react";
+import { PageBackdrop } from "~/app/_components/page-backdrop";
 
 interface HomeContentProps {
   userName: string;
@@ -15,15 +16,11 @@ export function HomeContent({ userName }: HomeContentProps) {
 
   return (
     <main className="relative min-h-screen">
-      <div
-        className="fixed inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url('/hero-elephants.jpg')" }}
-      />
-      <div className="fixed inset-0 bg-gradient-to-b from-black/70 via-black/40 to-brand-cream/95" />
+      <PageBackdrop />
 
-      <div className="relative z-10 mx-auto max-w-md px-4 pb-20 pt-8">
-        <div className="mb-6 flex items-center gap-3">
-          <Image src="/logo-white.png" alt="Klaserie Camps" width={56} height={32} className="drop-shadow-md" />
+      <div className="relative z-10 mx-auto max-w-3xl px-4 pb-8 pt-8 sm:px-6 lg:px-8">
+        <div className="mb-6 flex items-center gap-4">
+          <Image src="/logo-white.png" alt="Klaserie Camps" width={80} height={46} className="drop-shadow-md" />
           <div>
             <h1 className="text-xl font-bold text-white drop-shadow-md">Klaserie Camps</h1>
             <p className="text-sm text-white/70">Welcome back, {userName}</p>
@@ -83,8 +80,8 @@ export function HomeContent({ userName }: HomeContentProps) {
 
         <section>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-brand-dark">Recent Drives</h2>
-            <Link href="/drives" className="text-sm text-brand-brown hover:text-brand-brown/80">
+            <h2 className="text-lg font-semibold text-white drop-shadow-md">Recent Drives</h2>
+            <Link href="/drives" className="text-sm text-brand-gold hover:text-brand-gold/80">
               View all
             </Link>
           </div>
@@ -114,7 +111,7 @@ export function HomeContent({ userName }: HomeContentProps) {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-brand-khaki">No drives recorded yet.</p>
+            <p className="text-sm text-white/60">No drives recorded yet.</p>
           )}
         </section>
       </div>

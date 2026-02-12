@@ -26,8 +26,8 @@ export default function RootLayout({
       <body className="bg-brand-cream">
         <AuthSessionProvider>
           <TRPCReactProvider>
-            {children}
             <Nav />
+            {children}
           </TRPCReactProvider>
         </AuthSessionProvider>
       </body>

@@ -18,23 +18,32 @@ export function Nav() {
   if (!session) return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-brand-khaki/20 bg-white">
-      <div className="mx-auto flex max-w-md items-center justify-around lg:max-w-5xl">
-        {NAV_ITEMS.map((item) => {
-          const active = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex flex-1 flex-col items-center py-3 text-xs font-medium transition ${active ? "text-brand-brown" : "text-brand-khaki hover:text-brand-brown"}`}
-            >
-              {item.label}
-            </Link>
-          );
-        })}
+    <nav className="sticky top-0 z-50 border-b border-white/10 bg-brand-brown/95 backdrop-blur-sm">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-1">
+          {NAV_ITEMS.map((item) => {
+            const active =
+              item.href === "/"
+                ? pathname === "/"
+                : pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`rounded-md px-3 py-2 text-sm font-medium transition ${
+                  active
+                    ? "text-brand-gold"
+                    : "text-white/70 hover:text-white"
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
         <button
           onClick={() => signOut()}
-          className="flex flex-1 flex-col items-center py-3 text-xs font-medium text-brand-khaki transition hover:text-brand-brown"
+          className="rounded-md px-3 py-2 text-sm font-medium text-white/50 transition hover:text-white"
         >
           Sign Out
         </button>

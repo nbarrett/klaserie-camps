@@ -117,7 +117,7 @@ export default function DrivePage() {
         className="h-full w-full"
       />
 
-      <div className="absolute inset-x-0 bottom-0 z-[1000] pb-20">
+      <div className="absolute inset-x-0 bottom-0 z-[1000] pb-6">
         {gpsError && (
           <div className="mx-4 mb-2 rounded-lg bg-red-700/90 px-4 py-2 text-sm text-white backdrop-blur-sm">
             {gpsError}

@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { api } from "~/trpc/react";
+import { PageBackdrop } from "~/app/_components/page-backdrop";
 
 const DriveMap = dynamic(
   () => import("~/app/_components/map").then((mod) => mod.DriveMap),
@@ -39,11 +40,14 @@ export default function DriveDetailPage() {
 
   if (!drive.data) {
     return (
-      <main className="mx-auto max-w-md px-4 pt-6 lg:max-w-5xl">
-        <p className="text-brand-khaki">Drive not found.</p>
-        <Link href="/drives" className="mt-2 text-sm text-brand-brown">
-          Back to history
-        </Link>
+      <main className="relative min-h-screen">
+        <PageBackdrop />
+        <div className="relative z-10 mx-auto max-w-3xl px-4 pt-6 sm:px-6 lg:px-8">
+          <p className="text-white/60">Drive not found.</p>
+          <Link href="/drives" className="mt-2 text-sm text-brand-gold">
+            Back to history
+          </Link>
+        </div>
       </main>
     );
   }
@@ -60,50 +64,50 @@ export default function DriveDetailPage() {
   }));
 
   return (
-    <main className="mx-auto max-w-md pb-20 lg:max-w-5xl">
-      <div className="px-4 py-4">
-        <Link href="/drives" className="text-sm text-brand-brown hover:text-brand-brown/80">
-          &larr; Back to history
-        </Link>
-        <h1 className="mt-2 text-xl font-bold text-brand-dark">Drive Detail</h1>
-        <div className="mt-1 text-sm text-brand-khaki">
-          {drive.data.user.name} &middot;{" "}
-          {new Date(drive.data.startedAt).toLocaleDateString("en-ZA")}{" "}
-          {new Date(drive.data.startedAt).toLocaleTimeString("en-ZA", {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-          {drive.data.endedAt && (
-            <>
-              {" "}&ndash;{" "}
-              {new Date(drive.data.endedAt).toLocaleTimeString("en-ZA", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </>
-          )}
-        </div>
-      </div>
+    <main className="relative min-h-screen">
+      <PageBackdrop />
 
-      <div className="lg:grid lg:grid-cols-5 lg:gap-6 lg:px-4">
-        <div className="lg:col-span-3">
-          <DriveMap
-            zoom={14}
-            route={routePoints}
-            sightings={sightingMarkers}
-            className="h-[50vh] w-full lg:h-[65vh] lg:rounded-lg"
-          />
+      <div className="relative z-10 pb-8">
+        <div className="mx-auto max-w-3xl px-4 py-4 sm:px-6 lg:px-8">
+          <Link href="/drives" className="text-sm text-brand-gold hover:text-brand-gold/80">
+            &larr; Back to history
+          </Link>
+          <h1 className="mt-2 text-xl font-bold text-white drop-shadow-md">Drive Detail</h1>
+          <div className="mt-1 text-sm text-white/70">
+            {drive.data.user.name} &middot;{" "}
+            {new Date(drive.data.startedAt).toLocaleDateString("en-ZA")}{" "}
+            {new Date(drive.data.startedAt).toLocaleTimeString("en-ZA", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+            {drive.data.endedAt && (
+              <>
+                {" "}&ndash;{" "}
+                {new Date(drive.data.endedAt).toLocaleTimeString("en-ZA", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </>
+            )}
+          </div>
         </div>
 
-        <div className="px-4 pt-4 lg:col-span-2 lg:px-0 lg:pt-0">
+        <DriveMap
+          zoom={14}
+          route={routePoints}
+          sightings={sightingMarkers}
+          className="h-[60vh] w-full lg:h-[70vh]"
+        />
+
+        <div className="mx-auto max-w-3xl px-4 pt-4 sm:px-6 lg:px-8">
           {drive.data.notes && (
-            <div className="mb-4 rounded-lg bg-white p-3 shadow-sm">
+            <div className="mb-4 rounded-lg bg-white/90 p-3 shadow-sm backdrop-blur">
               <div className="text-xs font-medium uppercase text-brand-khaki">Notes</div>
               <div className="mt-1 text-sm text-brand-dark">{drive.data.notes}</div>
             </div>
           )}
 
-          <h2 className="mb-2 text-lg font-semibold text-brand-dark">
+          <h2 className="mb-2 text-lg font-semibold text-white drop-shadow-md">
             Sightings ({drive.data.sightings.length})
           </h2>
 
@@ -112,7 +116,7 @@ export default function DriveDetailPage() {
               {drive.data.sightings.map((sighting) => (
                 <div
                   key={sighting.id}
-                  className="rounded-lg bg-white p-3 shadow-sm"
+                  className="rounded-lg bg-white/90 p-3 shadow-sm backdrop-blur"
                 >
                   <div className="flex items-center justify-between">
                     <div className="font-medium text-brand-dark">
@@ -130,7 +134,7 @@ export default function DriveDetailPage() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-brand-khaki">No sightings recorded during this drive.</p>
+            <p className="text-sm text-white/60">No sightings recorded during this drive.</p>
           )}
         </div>
       </div>

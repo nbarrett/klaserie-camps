@@ -129,7 +129,7 @@ export default function ChecklistPage() {
       ))}
       <div className="fixed inset-0 bg-brand-cream/85" />
 
-      <div className="relative z-10 mx-auto max-w-md px-4 pb-20 pt-6">
+      <div className="relative z-10 mx-auto max-w-6xl px-4 pb-8 pt-6 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold text-brand-dark">
             Wildlife Checklist

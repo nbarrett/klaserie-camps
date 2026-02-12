@@ -5,17 +5,11 @@ import Link from "next/link";
 
 export function LandingPage() {
   return (
-    <main className="relative min-h-screen">
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="/hero-elephants.jpg"
-          alt="Klaserie Private Nature Reserve"
-          fill
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/70" />
-      </div>
+    <main
+      className="relative min-h-screen bg-cover bg-center"
+      style={{ backgroundImage: "url('/hero-elephants.jpg')" }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/70" />
 
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-between px-6 py-12">
         <div className="flex flex-col items-center text-center">
@@ -29,7 +23,7 @@ export function LandingPage() {
           <h1 className="text-4xl font-light tracking-wide text-white">
             WildTrack
           </h1>
-          <p className="mt-2 text-sm tracking-widest text-white/70 uppercase">
+          <p className="mt-2 text-sm tracking-widest uppercase text-white/70">
             Klaserie Private Nature Reserve
           </p>
         </div>

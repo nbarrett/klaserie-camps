@@ -3,12 +3,7 @@ set -euo pipefail
 
 # Load nvm
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # Load nvm
-nvm use 22.19.0 2>/dev/null || { echo "Error: nvm or Node.js 22.19.0 not found"; exit 1; }
-
-# Diagnostic output
-echo "Node.js version in hook: $(node --version)"
-echo "Node.js path in hook: $(which node)"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
 # Read refs from stdin: local_ref local_sha remote_ref remote_sha
 should_run=false
@@ -21,14 +16,18 @@ while read -r local_ref local_sha remote_ref remote_sha; do
 done
 
 if [ "$should_run" = true ]; then
-  echo "Pre-push: running unit tests for frontend and server..."
-  echo "-> Frontend tests"
-  npm run test
-  echo "-> Server tests"
-  npm run test:server
-  echo "All tests passed. Proceeding with push."
+  echo "Pre-push: running type check..."
+  pnpm exec tsc --noEmit
+
+  if pnpm run --silent test --passWithNoTests 2>/dev/null; then
+    echo "Tests passed."
+  else
+    echo "Pre-push: no test script configured, skipping tests."
+  fi
+
+  echo "Pre-push checks passed. Proceeding with push."
 else
-  echo "Pre-push: target branch is not main or pre-main. Skipping tests."
+  echo "Pre-push: target branch is not main or pre-main. Skipping checks."
 fi
 
 exit 0

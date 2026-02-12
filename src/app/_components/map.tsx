@@ -47,15 +47,15 @@ export function DriveMap({
   route = [],
   sightings = [],
   onMapClick,
-  showOverlay = true,
-  className = "h-[60vh] w-full",
+  showOverlay = false,
+  className = "h-full w-full",
 }: MapProps) {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const polylineRef = useRef<L.Polyline | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
   const overlayRef = useRef<L.ImageOverlay | null>(null);
-  const [overlayVisible, setOverlayVisible] = useState(true);
+  const [overlayVisible, setOverlayVisible] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -89,7 +89,7 @@ export function DriveMap({
       overlayRef.current = L.imageOverlay(
         "/dundee-map-0.png",
         DUNDEE_OVERLAY_BOUNDS,
-        { opacity: 0.7, interactive: false },
+        { opacity: 0, interactive: false },
       ).addTo(map);
     }
 
@@ -109,12 +109,7 @@ export function DriveMap({
 
   useEffect(() => {
     if (!overlayRef.current) return;
-
-    if (overlayVisible) {
-      overlayRef.current.setOpacity(0.7);
-    } else {
-      overlayRef.current.setOpacity(0);
-    }
+    overlayRef.current.setOpacity(overlayVisible ? 0.7 : 0);
   }, [overlayVisible]);
 
   useEffect(() => {
@@ -153,8 +148,8 @@ export function DriveMap({
   }, [sightings]);
 
   return (
-    <div className="relative">
-      <div ref={containerRef} className={`rounded-lg ${className}`} />
+    <div className="relative h-full w-full">
+      <div ref={containerRef} className={className} />
       {showOverlay && (
         <button
           onClick={() => setOverlayVisible(!overlayVisible)}

@@ -3,16 +3,17 @@ import { z } from "zod";
 import {
   createTRPCRouter,
   protectedProcedure,
+  publicProcedure,
 } from "~/server/api/trpc";
 
 export const speciesRouter = createTRPCRouter({
-  list: protectedProcedure.query(async ({ ctx }) => {
+  list: publicProcedure.query(async ({ ctx }) => {
     return ctx.db.species.findMany({
       orderBy: { commonName: "asc" },
     });
   }),
 
-  byCategory: protectedProcedure
+  byCategory: publicProcedure
     .input(z.object({ category: z.string() }))
     .query(async ({ ctx, input }) => {
       return ctx.db.species.findMany({
@@ -21,7 +22,7 @@ export const speciesRouter = createTRPCRouter({
       });
     }),
 
-  categories: protectedProcedure.query(async ({ ctx }) => {
+  categories: publicProcedure.query(async ({ ctx }) => {
     const species = await ctx.db.species.findMany({
       select: { category: true },
       distinct: ["category"],
@@ -42,7 +43,7 @@ export const speciesRouter = createTRPCRouter({
       return ctx.db.species.create({ data: input });
     }),
 
-  search: protectedProcedure
+  search: publicProcedure
     .input(z.object({ query: z.string() }))
     .query(async ({ ctx, input }) => {
       return ctx.db.species.findMany({

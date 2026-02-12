@@ -18,16 +18,16 @@ export default function DrivesPage() {
   }
 
   return (
-    <main className="mx-auto max-w-md px-4 pb-20 pt-6">
+    <main className="mx-auto max-w-md px-4 pb-20 pt-6 lg:max-w-5xl">
       <h1 className="mb-4 text-xl font-bold text-brand-dark">Drive History</h1>
 
       {drives.data && drives.data.items.length > 0 ? (
-        <div className="space-y-2">
+        <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0 xl:grid-cols-3">
           {drives.data.items.map((drive) => (
             <Link
               key={drive.id}
               href={`/drives/${drive.id}`}
-              className="block rounded-lg bg-white p-4 shadow-sm"
+              className="block rounded-lg bg-white p-4 shadow-sm transition hover:shadow-md"
             >
               <div className="flex items-center justify-between">
                 <div>

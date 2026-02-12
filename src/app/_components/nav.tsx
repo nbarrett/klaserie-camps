@@ -19,7 +19,7 @@ export function Nav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-brand-khaki/20 bg-white">
-      <div className="mx-auto flex max-w-md items-center justify-around">
+      <div className="mx-auto flex max-w-md items-center justify-around lg:max-w-5xl">
         {NAV_ITEMS.map((item) => {
           const active = pathname === item.href;
           return (

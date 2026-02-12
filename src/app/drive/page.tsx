@@ -124,70 +124,87 @@ export default function DrivePage() {
           </div>
         )}
 
-        <div className="mx-4 space-y-3">
+        {sightingLocation && (
+          <div className="mx-4 mb-3">
+            <SightingForm
+              driveSessionId={driveSession!.id}
+              latitude={sightingLocation.lat}
+              longitude={sightingLocation.lng}
+              onComplete={() => {
+                setSightingLocation(null);
+                void utils.drive.active.invalidate();
+              }}
+              onCancel={() => setSightingLocation(null)}
+            />
+          </div>
+        )}
+
+        <div className="mx-4">
           {!driveSession ? (
-            <button
-              onClick={handleStartDrive}
-              disabled={startDrive.isPending}
-              className="w-full rounded-lg bg-brand-brown py-3.5 text-sm font-semibold text-white shadow-lg transition hover:bg-brand-brown/90 disabled:opacity-50"
-            >
-              {startDrive.isPending ? "Starting..." : "Start Drive"}
-            </button>
+            <div className="flex items-center gap-3 rounded-xl bg-white/90 p-3 shadow-lg backdrop-blur-sm">
+              <button
+                onClick={handleStartDrive}
+                disabled={startDrive.isPending}
+                className="rounded-lg bg-brand-brown px-6 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-brand-brown/90 disabled:opacity-50"
+              >
+                {startDrive.isPending ? "Starting..." : "Start Drive"}
+              </button>
+              <div className="text-xs text-brand-khaki">
+                Begin GPS tracking and log sightings
+              </div>
+            </div>
           ) : (
-            <>
-              <div className="flex items-center justify-between rounded-lg bg-white/90 p-3 shadow-lg backdrop-blur-sm">
-                <div>
-                  <div className="text-sm font-medium text-brand-dark">
-                    {tracking ? "GPS Tracking Active" : "GPS Paused"}
-                  </div>
-                  <div className="text-xs text-brand-khaki">
-                    {sightingMarkers.length} sightings &middot; {allRoutePoints.length} GPS points
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  {tracking ? (
-                    <button
-                      onClick={stopTracking}
-                      className="rounded bg-brand-gold px-3 py-1.5 text-xs font-medium text-brand-dark"
-                    >
-                      Pause
-                    </button>
-                  ) : (
-                    <button
-                      onClick={startTracking}
-                      className="rounded bg-brand-teal px-3 py-1.5 text-xs font-medium text-white"
-                    >
-                      Resume
-                    </button>
-                  )}
+            <div className="rounded-xl bg-white/90 p-3 shadow-lg backdrop-blur-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className={`h-2 w-2 rounded-full ${tracking ? "animate-pulse bg-brand-green" : "bg-brand-gold"}`} />
+                  <span className="text-sm font-medium text-brand-dark">
+                    {tracking ? "Tracking" : "Paused"}
+                  </span>
+                  <span className="text-xs text-brand-khaki">
+                    {sightingMarkers.length} sightings &middot; {allRoutePoints.length} pts
+                  </span>
                 </div>
               </div>
-
-              <p className="text-center text-xs text-white drop-shadow-md">
-                Tap the map to log a sighting at that location
-              </p>
-
-              {sightingLocation && (
-                <SightingForm
-                  driveSessionId={driveSession.id}
-                  latitude={sightingLocation.lat}
-                  longitude={sightingLocation.lng}
-                  onComplete={() => {
-                    setSightingLocation(null);
-                    void utils.drive.active.invalidate();
+              <div className="mt-2 flex gap-2">
+                {tracking ? (
+                  <button
+                    onClick={stopTracking}
+                    className="flex-1 rounded-lg bg-brand-gold/20 px-3 py-2 text-xs font-semibold text-brand-dark transition hover:bg-brand-gold/30"
+                  >
+                    Pause GPS
+                  </button>
+                ) : (
+                  <button
+                    onClick={startTracking}
+                    className="flex-1 rounded-lg bg-brand-teal/20 px-3 py-2 text-xs font-semibold text-brand-teal transition hover:bg-brand-teal/30"
+                  >
+                    Resume GPS
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    const pos = currentPosition ?? { lat: mapCenter[0], lng: mapCenter[1] };
+                    setSightingLocation(pos);
                   }}
-                  onCancel={() => setSightingLocation(null)}
-                />
+                  className="flex-1 rounded-lg bg-brand-brown px-3 py-2 text-xs font-semibold text-white transition hover:bg-brand-brown/90"
+                >
+                  Log Sighting
+                </button>
+                <button
+                  onClick={handleEndDrive}
+                  disabled={endDrive.isPending}
+                  className="flex-1 rounded-lg bg-red-700/10 px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-700/20 disabled:opacity-50"
+                >
+                  {endDrive.isPending ? "Ending..." : "End Drive"}
+                </button>
+              </div>
+              {!sightingLocation && (
+                <p className="mt-2 text-center text-xs text-brand-khaki">
+                  Tap the map or press Log Sighting to record wildlife
+                </p>
               )}
-
-              <button
-                onClick={handleEndDrive}
-                disabled={endDrive.isPending}
-                className="w-full rounded-lg bg-red-700 py-3.5 text-sm font-semibold text-white shadow-lg transition hover:bg-red-800 disabled:opacity-50"
-              >
-                {endDrive.isPending ? "Ending..." : "End Drive"}
-              </button>
-            </>
+            </div>
           )}
         </div>
       </div>

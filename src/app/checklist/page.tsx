@@ -313,7 +313,7 @@ export default function ChecklistPage() {
                       key={item.speciesId}
                       className="overflow-hidden rounded-xl bg-white shadow-sm"
                     >
-                      <div className="flex items-center gap-2 px-3 py-2">
+                      <div className="flex min-h-14 items-center gap-2 px-3 py-2">
                         {session ? (
                           <button
                             onClick={() =>

@@ -20,6 +20,24 @@ const gpsStore = typeof window !== "undefined"
   ? createStore("klaserie-gps", "buffer")
   : undefined;
 
+const MAX_ACCURACY_M = 30;
+const MIN_DISTANCE_M = 5;
+const MAX_SPEED_MS = 33;
+
+function haversineMetres(
+  lat1: number, lng1: number,
+  lat2: number, lng2: number,
+): number {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const R = 6_371_000;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 async function persistBuffer(points: GpsPoint[]) {
   if (!gpsStore) return;
   const existing = (await get<GpsPoint[]>(GPS_BUFFER_KEY, gpsStore)) ?? [];
@@ -46,6 +64,8 @@ export function useGpsTracker({ intervalMs = 5000, driveId, onPoints }: GpsTrack
   const onPointsRef = useRef(onPoints);
   onPointsRef.current = onPoints;
 
+  const lastAcceptedRef = useRef<{ lat: number; lng: number; time: number } | null>(null);
+
   useEffect(() => {
     if (!driveId) return;
     void getPersistedBuffer().then((persisted) => {
@@ -63,15 +83,36 @@ export function useGpsTracker({ intervalMs = 5000, driveId, onPoints }: GpsTrack
 
     setError(null);
     setTracking(true);
+    lastAcceptedRef.current = null;
 
     watchIdRef.current = navigator.geolocation.watchPosition(
       (position) => {
+        const { latitude, longitude, accuracy } = position.coords;
+        const now = Date.now();
+
+        setCurrentPosition({
+          lat: latitude,
+          lng: longitude,
+          timestamp: new Date(now).toISOString(),
+        });
+
+        if (accuracy > MAX_ACCURACY_M) return;
+
+        const last = lastAcceptedRef.current;
+        if (last) {
+          const dist = haversineMetres(last.lat, last.lng, latitude, longitude);
+          if (dist < MIN_DISTANCE_M) return;
+
+          const dt = (now - last.time) / 1000;
+          if (dt > 0 && dist / dt > MAX_SPEED_MS) return;
+        }
+
         const point: GpsPoint = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-          timestamp: new Date().toISOString(),
+          lat: latitude,
+          lng: longitude,
+          timestamp: new Date(now).toISOString(),
         };
-        setCurrentPosition(point);
+        lastAcceptedRef.current = { lat: latitude, lng: longitude, time: now };
         bufferRef.current = [...bufferRef.current, point];
       },
       (err) => {
@@ -81,8 +122,8 @@ export function useGpsTracker({ intervalMs = 5000, driveId, onPoints }: GpsTrack
       },
       {
         enableHighAccuracy: true,
-        maximumAge: 5000,
-        timeout: 30000,
+        maximumAge: 0,
+        timeout: 15000,
       },
     );
 

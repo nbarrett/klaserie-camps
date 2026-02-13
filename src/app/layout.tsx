@@ -6,6 +6,7 @@ import { Geist } from "next/font/google";
 import { TRPCReactProvider } from "~/trpc/react";
 import { AuthSessionProvider } from "~/app/_components/session-provider";
 import { Nav } from "~/app/_components/nav";
+import { SafariPrompt } from "~/app/_components/safari-prompt";
 
 export const metadata: Metadata = {
   title: "Klaserie Camps",
@@ -41,6 +42,7 @@ export default function RootLayout({
       <body className="flex h-dvh flex-col bg-brand-cream">
         <AuthSessionProvider>
           <TRPCReactProvider>
+            <SafariPrompt />
             <Nav />
             {children}
           </TRPCReactProvider>

@@ -263,13 +263,13 @@ export default function ChecklistPage() {
               })}
             </div>
 
-            <div className="mt-4 flex items-center gap-2">
+            <div className="mt-4 flex flex-wrap items-center gap-2">
               <input
                 type="text"
                 placeholder="Search species..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 rounded-md border border-brand-khaki/30 bg-white px-3 py-2 text-sm focus:border-brand-gold focus:outline-none"
+                className="min-w-0 flex-1 rounded-md border border-brand-khaki/30 bg-white px-3 py-2 text-sm focus:border-brand-gold focus:outline-none"
               />
               {session && (
                 <button
@@ -283,7 +283,7 @@ export default function ChecklistPage() {
                   {showSpottedOnly ? "Spotted Only" : "Show All"}
                 </button>
               )}
-              <div className="flex rounded-lg border border-brand-khaki/30 bg-white">
+              <div className="flex shrink-0 rounded-lg border border-brand-khaki/30 bg-white">
                 {(["sm", "lg", "max", "xl"] as const).map((size, i, arr) => (
                   <button
                     key={size}

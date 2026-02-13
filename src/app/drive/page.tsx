@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { api } from "~/trpc/react";
@@ -19,10 +19,45 @@ interface GpsPoint {
   timestamp: string;
 }
 
+function formatDuration(seconds: number): string {
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return hrs > 0
+    ? `${pad(hrs)}:${pad(mins)}:${pad(secs)}`
+    : `${pad(mins)}:${pad(secs)}`;
+}
+
+function useDriveElapsed(startedAt: Date | string | null) {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    if (!startedAt) {
+      setElapsed(0);
+      return;
+    }
+
+    const start = new Date(startedAt).getTime();
+
+    const tick = () => {
+      setElapsed(Math.floor((Date.now() - start) / 1000));
+    };
+
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [startedAt]);
+
+  return elapsed;
+}
+
 export default function DrivePage() {
   const { data: session, status } = useSession();
   const [routePoints, setRoutePoints] = useState<GpsPoint[]>([]);
   const [sightingLocation, setSightingLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [mutationError, setMutationError] = useState<string | null>(null);
+  const [starting, setStarting] = useState(false);
 
   const utils = api.useUtils();
 
@@ -30,17 +65,17 @@ export default function DrivePage() {
     enabled: status === "authenticated",
   });
 
-  const startDrive = api.drive.start.useMutation({
-    onSuccess: () => {
-      void utils.drive.active.invalidate();
-    },
-  });
+  const startDrive = api.drive.start.useMutation();
 
   const endDrive = api.drive.end.useMutation({
     onSuccess: () => {
       setRoutePoints([]);
+      setMutationError(null);
       void utils.drive.active.invalidate();
       void utils.drive.list.invalidate();
+    },
+    onError: (err) => {
+      setMutationError(err.message);
     },
   });
 
@@ -62,15 +97,8 @@ export default function DrivePage() {
       onPoints: handleGpsPoints,
     });
 
-  if (status === "loading") {
-    return <div className="flex h-screen items-center justify-center text-brand-khaki">Loading...</div>;
-  }
-
-  if (!session) {
-    redirect("/auth/signin");
-  }
-
   const driveSession = activeDrive.data;
+  const elapsed = useDriveElapsed(driveSession?.startedAt ?? null);
   const existingRoute = (driveSession?.route ?? []) as unknown as GpsPoint[];
   const allRoutePoints = [...existingRoute, ...routePoints];
 
@@ -83,16 +111,32 @@ export default function DrivePage() {
     notes: s.notes,
   }));
 
+  if (status === "loading") {
+    return <div className="flex h-screen items-center justify-center text-brand-khaki">Loading...</div>;
+  }
+
+  if (!session) {
+    redirect("/auth/signin");
+  }
+
   const handleMapClick = (lat: number, lng: number) => {
     if (driveSession) {
       setSightingLocation({ lat, lng });
     }
   };
 
-  const handleStartDrive = () => {
-    startDrive.mutate(undefined, {
-      onSuccess: () => startTracking(),
-    });
+  const handleStartDrive = async () => {
+    setMutationError(null);
+    setStarting(true);
+    try {
+      await startDrive.mutateAsync();
+      startTracking();
+      await utils.drive.active.invalidate();
+    } catch (err) {
+      setMutationError(err instanceof Error ? err.message : "Failed to start drive");
+    } finally {
+      setStarting(false);
+    }
   };
 
   const handleEndDrive = () => {
@@ -106,6 +150,8 @@ export default function DrivePage() {
     ? [currentPosition.lat, currentPosition.lng]
     : [-24.25, 31.15];
 
+  const isActive = !!driveSession || starting;
+
   return (
     <main className="relative h-screen w-full">
       <DriveMap
@@ -113,14 +159,32 @@ export default function DrivePage() {
         zoom={15}
         route={allRoutePoints}
         sightings={sightingMarkers}
-        onMapClick={driveSession ? handleMapClick : undefined}
+        onMapClick={isActive ? handleMapClick : undefined}
         className="h-full w-full"
       />
 
+      {isActive && (
+        <div className="absolute inset-x-0 top-0 z-[1000] flex items-center justify-center gap-6 bg-brand-dark/80 px-4 py-3 backdrop-blur-sm">
+          <div className="flex items-center gap-2">
+            <div className={`h-3 w-3 rounded-full ${tracking ? "animate-pulse bg-brand-green" : "bg-brand-gold"}`} />
+            <span className="text-sm font-medium text-white">
+              {tracking ? "On Drive" : "Paused"}
+            </span>
+          </div>
+          <div className="font-mono text-3xl font-bold tabular-nums text-white">
+            {formatDuration(elapsed)}
+          </div>
+          <div className="flex items-center gap-4 text-sm text-white/70">
+            <span>{sightingMarkers.length} sightings</span>
+            <span>{allRoutePoints.length} pts</span>
+          </div>
+        </div>
+      )}
+
       <div className="absolute inset-x-0 bottom-0 z-[1000] pb-6">
-        {gpsError && (
+        {(gpsError ?? mutationError) && (
           <div className="mx-4 mb-2 rounded-lg bg-red-700/90 px-4 py-2 text-sm text-white backdrop-blur-sm">
-            {gpsError}
+            {mutationError ?? gpsError}
           </div>
         )}
 
@@ -140,70 +204,89 @@ export default function DrivePage() {
         )}
 
         <div className="mx-4">
-          {!driveSession ? (
-            <div className="flex items-center gap-3 rounded-xl bg-white/90 p-3 shadow-lg backdrop-blur-sm">
+          {!isActive ? (
+            <div className="flex flex-col items-center gap-4 rounded-2xl bg-white/95 p-6 shadow-xl backdrop-blur-sm">
+              <div className="text-center">
+                <h2 className="text-lg font-bold text-brand-dark">Game Drive</h2>
+                <p className="mt-1 text-sm text-brand-khaki">
+                  Track your route and log wildlife sightings
+                </p>
+              </div>
               <button
                 onClick={handleStartDrive}
                 disabled={startDrive.isPending}
-                className="rounded-lg bg-brand-brown px-6 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-brand-brown/90 disabled:opacity-50"
+                className="flex h-20 w-20 items-center justify-center rounded-full bg-brand-green text-lg font-bold text-white shadow-lg transition hover:bg-brand-green-light active:scale-95 disabled:opacity-50"
               >
-                {startDrive.isPending ? "Starting..." : "Start Drive"}
+                {startDrive.isPending ? (
+                  <svg className="h-6 w-6 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                ) : (
+                  "GO"
+                )}
               </button>
-              <div className="text-xs text-brand-khaki">
-                Begin GPS tracking and log sightings
-              </div>
+            </div>
+          ) : starting && !driveSession ? (
+            <div className="flex flex-col items-center gap-3 rounded-2xl bg-white/95 p-6 shadow-xl backdrop-blur-sm">
+              <svg className="h-8 w-8 animate-spin text-brand-green" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              <span className="text-sm font-medium text-brand-dark">Starting game drive...</span>
             </div>
           ) : (
-            <div className="rounded-xl bg-white/90 p-3 shadow-lg backdrop-blur-sm">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className={`h-2 w-2 rounded-full ${tracking ? "animate-pulse bg-brand-green" : "bg-brand-gold"}`} />
-                  <span className="text-sm font-medium text-brand-dark">
-                    {tracking ? "Tracking" : "Paused"}
-                  </span>
-                  <span className="text-xs text-brand-khaki">
-                    {sightingMarkers.length} sightings &middot; {allRoutePoints.length} pts
-                  </span>
-                </div>
-              </div>
-              <div className="mt-2 flex gap-2">
+            <div className="rounded-2xl bg-white/95 p-4 shadow-xl backdrop-blur-sm">
+              <div className="grid grid-cols-3 gap-2">
                 {tracking ? (
                   <button
                     onClick={stopTracking}
-                    className="flex-1 rounded-lg bg-brand-gold/20 px-3 py-2 text-xs font-semibold text-brand-dark transition hover:bg-brand-gold/30"
+                    className="flex flex-col items-center gap-1 rounded-xl bg-brand-gold/20 px-3 py-3 transition active:scale-95"
                   >
-                    Pause GPS
+                    <svg className="h-6 w-6 text-brand-dark" fill="currentColor" viewBox="0 0 24 24">
+                      <rect x="6" y="4" width="4" height="16" rx="1" />
+                      <rect x="14" y="4" width="4" height="16" rx="1" />
+                    </svg>
+                    <span className="text-xs font-semibold text-brand-dark">Pause</span>
                   </button>
                 ) : (
                   <button
                     onClick={startTracking}
-                    className="flex-1 rounded-lg bg-brand-teal/20 px-3 py-2 text-xs font-semibold text-brand-teal transition hover:bg-brand-teal/30"
+                    className="flex flex-col items-center gap-1 rounded-xl bg-brand-green/20 px-3 py-3 transition active:scale-95"
                   >
-                    Resume GPS
+                    <svg className="h-6 w-6 text-brand-green" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                    <span className="text-xs font-semibold text-brand-green">Resume</span>
                   </button>
                 )}
+
                 <button
                   onClick={() => {
                     const pos = currentPosition ?? { lat: mapCenter[0], lng: mapCenter[1] };
                     setSightingLocation(pos);
                   }}
-                  className="flex-1 rounded-lg bg-brand-brown px-3 py-2 text-xs font-semibold text-white transition hover:bg-brand-brown/90"
+                  className="flex flex-col items-center gap-1 rounded-xl bg-brand-brown/10 px-3 py-3 transition active:scale-95"
                 >
-                  Log Sighting
+                  <svg className="h-6 w-6 text-brand-brown" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span className="text-xs font-semibold text-brand-brown">Sighting</span>
                 </button>
+
                 <button
                   onClick={handleEndDrive}
                   disabled={endDrive.isPending}
-                  className="flex-1 rounded-lg bg-red-700/10 px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-700/20 disabled:opacity-50"
+                  className="flex flex-col items-center gap-1 rounded-xl bg-red-50 px-3 py-3 transition active:scale-95 disabled:opacity-50"
                 >
-                  {endDrive.isPending ? "Ending..." : "End Drive"}
+                  <svg className="h-6 w-6 text-red-600" fill="currentColor" viewBox="0 0 24 24">
+                    <rect x="4" y="4" width="16" height="16" rx="2" />
+                  </svg>
+                  <span className="text-xs font-semibold text-red-600">
+                    {endDrive.isPending ? "Ending..." : "Finish"}
+                  </span>
                 </button>
               </div>
-              {!sightingLocation && (
-                <p className="mt-2 text-center text-xs text-brand-khaki">
-                  Tap the map or press Log Sighting to record wildlife
-                </p>
-              )}
             </div>
           )}
         </div>

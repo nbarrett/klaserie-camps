@@ -1,0 +1,70 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { LODGE_DATA } from "~/app/lodges/lodge-data";
+import { PageBackdrop } from "~/app/_components/page-backdrop";
+
+export default function LodgesPage() {
+  return (
+    <main className="relative min-h-screen">
+      <PageBackdrop />
+
+      <div className="relative z-10 mx-auto max-w-5xl px-6 py-12 sm:px-8">
+        <div className="text-center">
+          <p className="text-sm font-medium uppercase tracking-widest text-brand-gold">
+            Klaserie Private Nature Reserve
+          </p>
+          <h1 className="mt-2 text-3xl font-bold text-white drop-shadow sm:text-4xl">
+            Our Camps
+          </h1>
+          <p className="mt-3 text-lg text-white/80 drop-shadow">
+            Three exclusive safari camps in the heart of the Greater Kruger
+          </p>
+        </div>
+
+        <div className="mt-12 space-y-8">
+          {LODGE_DATA.map((lodge) => (
+            <Link
+              key={lodge.slug}
+              href={`/lodges/${lodge.slug}`}
+              className="group block overflow-hidden rounded-2xl bg-white/95 shadow-lg backdrop-blur-sm transition hover:shadow-xl"
+            >
+              <div className="sm:flex">
+                <div className="relative h-56 sm:h-auto sm:w-80 sm:shrink-0">
+                  <Image
+                    src={lodge.heroImages[0]!}
+                    alt={lodge.name}
+                    fill
+                    className="object-cover transition group-hover:scale-105"
+                  />
+                </div>
+                <div className="flex flex-col justify-center p-6 sm:p-8">
+                  <h2 className="text-2xl font-bold text-brand-dark group-hover:text-brand-brown">
+                    {lodge.name}
+                  </h2>
+                  <p className="mt-1 text-sm font-medium text-brand-gold">
+                    {lodge.tagline}
+                  </p>
+                  <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-brand-dark/70">
+                    {lodge.description}
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {lodge.highlights.slice(0, 3).map((h) => (
+                      <span
+                        key={h}
+                        className="rounded-full bg-brand-cream px-3 py-1 text-xs font-medium text-brand-brown"
+                      >
+                        {h}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </main>
+  );
+}

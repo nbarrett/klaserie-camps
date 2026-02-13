@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { api } from "~/trpc/react";
 import { PageBackdrop } from "~/app/_components/page-backdrop";
@@ -13,18 +12,20 @@ export function HomeContent({ userName }: HomeContentProps) {
   const activeDrive = api.drive.active.useQuery();
   const recentSightings = api.sighting.recent.useQuery({ limit: 5 });
   const recentDrives = api.drive.list.useQuery({ limit: 5 });
+  const lodge = api.lodge.mine.useQuery();
 
   return (
     <main className="relative min-h-screen">
       <PageBackdrop />
 
       <div className="relative z-10 mx-auto max-w-3xl px-4 pb-8 pt-8 sm:px-6 lg:px-8">
-        <div className="mb-6 flex items-center gap-4">
-          <Image src="/logo-white.png" alt="Klaserie Camps" width={80} height={46} className="drop-shadow-md" />
-          <div>
-            <h1 className="text-xl font-bold text-white drop-shadow-md">Klaserie Camps</h1>
-            <p className="text-sm text-white/70">Welcome back, {userName}</p>
-          </div>
+        <div className="mb-6">
+          <h1 className="text-xl font-bold text-white drop-shadow-md">Welcome back, {userName}</h1>
+          {lodge.data && (
+            <p className="mt-1 text-sm text-white/70">
+              {lodge.data.name} &middot; Klaserie Private Nature Reserve
+            </p>
+          )}
         </div>
 
         {activeDrive.data ? (

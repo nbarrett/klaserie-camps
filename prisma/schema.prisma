@@ -46,6 +46,7 @@ model Species {
   scientificName String?
   category       String
   family         String?
+  imageUrl       String?
   sightings      Sighting[]
   checklistItems ChecklistItem[]
   createdAt      DateTime        @default(now())

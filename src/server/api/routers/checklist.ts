@@ -40,6 +40,7 @@ export const checklistRouter = createTRPCRouter({
           scientificName: s.scientificName,
           category: s.category,
           family: s.family,
+          imageUrl: s.imageUrl,
           spotted: item?.spotted ?? false,
           sightingCount: item?.sightingCount ?? 0,
           firstSpottedAt: item?.firstSpottedAt ?? null,

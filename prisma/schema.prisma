@@ -25,6 +25,7 @@ model User {
   driveSessions  DriveSession[]
   sightings      Sighting[]
   checklistItems ChecklistItem[]
+  stravaAccount  StravaAccount?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 }
@@ -62,6 +63,7 @@ model DriveSession {
   startedAt DateTime   @default(now())
   endedAt   DateTime?
   route     Json[]
+  photos    Json[]     @default([])
   sightings Sighting[]
   notes     String?
   createdAt DateTime   @default(now())
@@ -100,4 +102,20 @@ model ChecklistItem {
   updatedAt      DateTime      @updatedAt
 
   @@unique([userId, speciesId])
+}
+
+model StravaAccount {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String   @unique @db.ObjectId
+  user            User     @relation(fields: [userId], references: [id])
+  athleteId       Int
+  firstName       String
+  lastName        String
+  profileImageUrl String?
+  accessToken     String
+  refreshToken    String
+  expiresAt       Int
+  scope           String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

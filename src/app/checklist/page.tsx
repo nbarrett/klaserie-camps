@@ -20,7 +20,12 @@ export default function ChecklistPage() {
   const [showSpottedOnly, setShowSpottedOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedImage, setExpandedImage] = useState<{ url: string; name: string } | null>(null);
-  const [thumbSize, setThumbSize] = useState<"sm" | "lg" | "max">("lg");
+  const [thumbSize, setThumbSize] = useState<"sm" | "lg" | "max" | "xl">(() => {
+    if (typeof window === "undefined") return "lg";
+    const saved = localStorage.getItem("checklist-thumb-size");
+    if (saved === "sm" || saved === "lg" || saved === "max" || saved === "xl") return saved;
+    return "lg";
+  });
 
   useEffect(() => {
     if (!expandedImage) return;
@@ -30,6 +35,10 @@ export default function ChecklistPage() {
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [expandedImage]);
+
+  useEffect(() => {
+    localStorage.setItem("checklist-thumb-size", thumbSize);
+  }, [thumbSize]);
 
   const isGuest = status !== "loading" && !session;
 
@@ -259,7 +268,7 @@ export default function ChecklistPage() {
                 </button>
               )}
               <div className="flex rounded-lg border border-brand-khaki/30 bg-white">
-                {(["sm", "lg", "max"] as const).map((size) => (
+                {(["sm", "lg", "max", "xl"] as const).map((size, i, arr) => (
                   <button
                     key={size}
                     onClick={() => setThumbSize(size)}
@@ -267,9 +276,9 @@ export default function ChecklistPage() {
                       thumbSize === size
                         ? "bg-brand-brown text-white"
                         : "text-brand-khaki hover:text-brand-dark"
-                    } ${size === "sm" ? "rounded-l-lg" : size === "max" ? "rounded-r-lg" : ""}`}
+                    } ${i === 0 ? "rounded-l-lg" : i === arr.length - 1 ? "rounded-r-lg" : ""}`}
                   >
-                    {size === "sm" ? "S" : size === "lg" ? "M" : "L"}
+                    {size === "sm" ? "S" : size === "lg" ? "M" : size === "max" ? "L" : "XL"}
                   </button>
                 ))}
               </div>
@@ -281,10 +290,88 @@ export default function ChecklistPage() {
             <div className="space-y-4">
               {isLoading ? (
                 <p className="text-sm text-brand-khaki">Loading checklist...</p>
+              ) : thumbSize === "xl" && filteredItems.length > 0 ? (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                  {filteredItems.map((item) => (
+                    <div
+                      key={item.speciesId}
+                      className="overflow-hidden rounded-xl bg-white shadow-sm"
+                    >
+                      <div className="flex items-center gap-2 px-3 py-2">
+                        {session ? (
+                          <button
+                            onClick={() =>
+                              toggleSpotted.mutate({
+                                speciesId: item.speciesId,
+                              })
+                            }
+                            disabled={toggleSpotted.isPending}
+                            className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                          >
+                            <div
+                              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border ${item.spotted ? "border-brand-green bg-brand-green text-white" : "border-brand-khaki/40"}`}
+                            >
+                              {item.spotted && (
+                                <svg
+                                  className="h-3 w-3"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                  strokeWidth={3}
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M5 13l4 4L19 7"
+                                  />
+                                </svg>
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <div
+                                className={`truncate text-sm font-medium ${item.spotted ? "text-brand-green" : "text-brand-dark"}`}
+                              >
+                                {item.commonName}
+                              </div>
+                              {item.sightingCount > 0 && (
+                                <div className="text-xs text-brand-khaki">
+                                  Seen {item.sightingCount}x
+                                </div>
+                              )}
+                            </div>
+                          </button>
+                        ) : (
+                          <div className="flex min-w-0 items-center gap-2">
+                            <div className="h-5 w-5 shrink-0 rounded border border-brand-khaki/20" />
+                            <div className="truncate text-sm font-medium text-brand-dark">
+                              {item.commonName}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      {item.imageUrl ? (
+                        <button
+                          onClick={() => setExpandedImage({ url: item.imageUrl!, name: item.commonName })}
+                          className="block w-full"
+                        >
+                          <img
+                            src={item.imageUrl}
+                            alt={item.commonName}
+                            className="aspect-square w-full object-cover transition hover:scale-105"
+                          />
+                        </button>
+                      ) : (
+                        <div className="flex aspect-square items-center justify-center bg-brand-cream/50 text-sm text-brand-khaki">
+                          No image
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               ) : sortedGroups.length > 0 ? (
                 sortedGroups.map(([group, items]) => (
                   <div key={group}>
-                    <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-brand-brown">
+                    <h3 className="mb-1 text-xs font-semibold tracking-wider text-brand-brown">
                       {group}
                     </h3>
                     <div className="rounded-lg bg-white shadow-sm">

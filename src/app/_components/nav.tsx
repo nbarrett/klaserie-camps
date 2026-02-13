@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { href: "/drive", label: "Drive" },
   { href: "/checklist", label: "Checklist" },
   { href: "/drives", label: "History" },
+  { href: "/strava", label: "Strava" },
 ];
 
 export function Nav() {

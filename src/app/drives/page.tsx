@@ -23,7 +23,15 @@ export default function DrivesPage() {
       <PageBackdrop />
 
       <div className="relative z-10 mx-auto max-w-3xl px-4 pb-8 pt-6 sm:px-6 lg:px-8">
-        <h1 className="mb-4 text-xl font-bold text-white drop-shadow-md">Drive History</h1>
+        <div className="mb-4 flex items-center justify-between">
+          <h1 className="text-xl font-bold text-white drop-shadow-md">Drive History</h1>
+          <Link
+            href="/drives/import"
+            className="rounded-md bg-brand-green px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110"
+          >
+            Import GPX
+          </Link>
+        </div>
 
         {drives.data && drives.data.items.length > 0 ? (
           <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">

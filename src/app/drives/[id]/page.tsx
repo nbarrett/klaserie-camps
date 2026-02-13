@@ -19,6 +19,13 @@ interface GpsPoint {
   timestamp: string;
 }
 
+interface DrivePhoto {
+  url: string;
+  lat: number | null;
+  lng: number | null;
+  caption: string | null;
+}
+
 export default function DriveDetailPage() {
   const params = useParams();
   const { data: session, status } = useSession();
@@ -53,6 +60,7 @@ export default function DriveDetailPage() {
   }
 
   const routePoints = (drive.data.route ?? []) as unknown as GpsPoint[];
+  const photos = (drive.data.photos ?? []) as unknown as DrivePhoto[];
 
   const sightingMarkers = drive.data.sightings.map((s) => ({
     id: s.id,
@@ -105,6 +113,28 @@ export default function DriveDetailPage() {
               <div className="text-xs font-medium uppercase text-brand-khaki">Notes</div>
               <div className="mt-1 text-sm text-brand-dark">{drive.data.notes}</div>
             </div>
+          )}
+
+          {photos.length > 0 && (
+            <>
+              <h2 className="mb-2 text-lg font-semibold text-white drop-shadow-md">
+                Photos ({photos.length})
+              </h2>
+              <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {photos.map((photo, i) => (
+                  <div key={i} className="overflow-hidden rounded-lg bg-white/90 shadow-sm backdrop-blur">
+                    <img
+                      src={photo.url}
+                      alt={photo.caption ?? `Drive photo ${i + 1}`}
+                      className="aspect-square w-full object-cover"
+                    />
+                    {photo.caption && (
+                      <div className="px-2 py-1 text-xs text-brand-dark">{photo.caption}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
           )}
 
           <h2 className="mb-2 text-lg font-semibold text-white drop-shadow-md">

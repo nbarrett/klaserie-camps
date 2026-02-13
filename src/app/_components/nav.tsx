@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { api } from "~/trpc/react";
 import { OfflineIndicator } from "~/app/_components/offline-indicator";
+import { PrecacheIndicator } from "~/app/_components/precache-indicator";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home" },
@@ -70,6 +71,7 @@ export function Nav() {
               </div>
             )}
             <OfflineIndicator />
+            <PrecacheIndicator />
             <div className="hidden items-center gap-2 lg:flex">
               {NAV_ITEMS.map((item) => {
                 const active =
@@ -171,6 +173,7 @@ export function Nav() {
           </div>
           <div className="flex items-center justify-between border-t border-white/10 py-6">
             <OfflineIndicator />
+            <PrecacheIndicator />
             <button
               onClick={() => signOut()}
               className="text-lg font-medium text-white/50 transition hover:text-white"

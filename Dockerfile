@@ -28,16 +28,8 @@ ENV SKIP_ENV_VALIDATION=1
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm run build
 
-RUN node -e " \
-  const path = require('path'); \
-  const fs = require('fs'); \
-  ['@prisma/engines', '@prisma/config'].forEach(mod => { \
-    try { \
-      const src = path.dirname(require.resolve(mod + '/package.json')); \
-      const dest = path.join('/app/node_modules', mod); \
-      if (!fs.existsSync(dest)) fs.cpSync(src, dest, { recursive: true }); \
-    } catch {} \
-  });"
+RUN cp -rL node_modules/.pnpm/prisma@*/node_modules/@prisma/engines node_modules/@prisma/engines && \
+    cp -rL node_modules/.pnpm/prisma@*/node_modules/@prisma/config node_modules/@prisma/config
 
 FROM node:22-slim AS runner
 WORKDIR /app

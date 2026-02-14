@@ -18,6 +18,17 @@ const serwist = new Serwist({
   clientsClaim: true,
   navigationPreload: true,
   runtimeCaching: [
+    {
+      matcher: ({ url }: { url: URL }) => url.pathname === "/api/auth/session",
+      handler: new NetworkFirst({
+        cacheName: "auth-session",
+        networkTimeoutSeconds: 3,
+        plugins: [
+          new ExpirationPlugin({ maxEntries: 1, maxAgeSeconds: 7 * 24 * 60 * 60 }),
+          new CacheableResponsePlugin({ statuses: [0, 200] }),
+        ],
+      }),
+    },
     ...defaultCache,
     {
       matcher: /^https:\/\/upload\.wikimedia\.org\/.*/i,

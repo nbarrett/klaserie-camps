@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import { clearCachedSession } from "~/lib/session-cache";
 import { api } from "~/trpc/react";
 import { OfflineIndicator } from "~/app/_components/offline-indicator";
 import { PrecacheIndicator } from "~/app/_components/precache-indicator";
@@ -31,6 +32,7 @@ export function Nav() {
 
   const handleSignOut = useCallback(async () => {
     closeMenu();
+    clearCachedSession();
     await signOut({ redirect: false });
     window.location.href = "/auth/signin";
   }, [closeMenu]);

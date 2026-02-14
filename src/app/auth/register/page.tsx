@@ -37,7 +37,6 @@ export default function RegisterPage() {
         setLoading(false);
       } else {
         router.push("/");
-        router.refresh();
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Registration failed";

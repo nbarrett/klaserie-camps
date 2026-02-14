@@ -11,8 +11,8 @@ import { SwProvider } from "~/app/_components/sw-provider";
 import { SyncIndicator } from "~/app/_components/sync-indicator";
 
 export const metadata: Metadata = {
-  title: "Klaserie Camps",
-  description: "GPS wildlife tracking for Klaserie Private Nature Reserve",
+  title: "Safari Track",
+  description: "GPS-tracked game drives and wildlife sighting logs",
   icons: [
     { rel: "icon", url: "/favicon.ico" },
     { rel: "apple-touch-icon", url: "/icon-192.png" },
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Klaserie Camps",
+    title: "Safari Track",
   },
   other: {
     "theme-color": "#6B4C2E",

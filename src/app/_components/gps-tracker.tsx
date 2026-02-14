@@ -17,7 +17,7 @@ interface GpsTrackerOptions {
 
 const GPS_BUFFER_KEY = "gps-route-buffer";
 const gpsStore = typeof window !== "undefined"
-  ? createStore("klaserie-gps", "buffer")
+  ? createStore("safari-track-gps", "buffer")
   : undefined;
 
 const MAX_ACCURACY_M = 30;

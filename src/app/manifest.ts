@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Klaserie Camps",
-    short_name: "Klaserie Camps",
-    description: "GPS wildlife tracking for Klaserie Private Nature Reserve",
+    name: "Safari Track",
+    short_name: "Safari Track",
+    description: "GPS-tracked game drives and wildlife sighting logs",
     start_url: "/",
     display: "standalone",
     orientation: "portrait",

@@ -33,13 +33,13 @@ export function LandingPage() {
         <div className="flex flex-col items-center text-center">
           <Image
             src="/logo-white.png"
-            alt="Klaserie Camps"
+            alt="Safari Track"
             width={180}
             height={80}
             className="mb-4"
           />
           <h1 className="text-4xl font-light tracking-wide text-white">
-            Klaserie Camps
+            Safari Track
           </h1>
           <p className="mt-2 text-sm tracking-widest uppercase text-white/70">
             Klaserie Private Nature Reserve
@@ -53,8 +53,7 @@ export function LandingPage() {
             </h2>
             <p className="text-sm leading-relaxed text-white/70">
               GPS-tracked game drives, wildlife sighting logs, and a personal
-              species checklist for guides at Nzumba, Last Word Kitara, and
-              Dundee camps.
+              species checklist for safari guides and guests.
             </p>
           </div>
 

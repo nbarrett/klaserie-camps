@@ -37,7 +37,7 @@ export const userRouter = createTRPCRouter({
             }
 
             const slug = input.name.toLowerCase().replace(/\s+/g, "-");
-            const email = `${slug}@klaserie.local`;
+            const email = `${slug}@safari-track.local`;
             const hashedPassword = await bcrypt.hash(input.password, 12);
 
             const user = await ctx.db.user.create({

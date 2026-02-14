@@ -24,7 +24,7 @@ export interface LocalDrive {
 
 const DRIVE_KEY = "active-drive";
 const driveStore = typeof window !== "undefined"
-  ? createStore("klaserie-drive", "session")
+  ? createStore("safari-track-drive", "session")
   : undefined;
 
 export async function getLocalDrive(): Promise<LocalDrive | null> {

@@ -65,7 +65,7 @@ export default function RegisterPage() {
       <div className="pointer-events-none absolute inset-0 z-0">
         <Image
           src="/hero-rhinos.webp"
-          alt="Klaserie wildlife"
+          alt="Safari wildlife"
           fill
           className="object-cover"
           priority
@@ -77,7 +77,7 @@ export default function RegisterPage() {
         <div className="mb-8 flex flex-col items-center">
           <Image
             src="/logo-white.png"
-            alt="Klaserie Camps"
+            alt="Safari Track"
             width={200}
             height={100}
             className="mb-4"

@@ -68,7 +68,7 @@ export function Nav() {
             <Link href="/" className="flex-shrink-0 py-4">
               <Image
                 src="/logo-white.png"
-                alt="Klaserie Camps"
+                alt="Safari Track"
                 width={180}
                 height={104}
                 className="h-[calc(var(--spacing)*14)] w-auto lg:h-[calc(var(--spacing)*21)]"
@@ -135,7 +135,7 @@ export function Nav() {
           <Link href="/" onClick={closeMenu} className="flex-shrink-0">
             <Image
               src="/logo-white.png"
-              alt="Klaserie Camps"
+              alt="Safari Track"
               width={180}
               height={104}
               className="h-[calc(var(--spacing)*14)] w-auto"

@@ -18,7 +18,7 @@ export interface Trip {
 
 const TRIP_KEY = "active-trip";
 const tripStore = typeof window !== "undefined"
-  ? createStore("klaserie-trip", "session")
+  ? createStore("safari-track-trip", "session")
   : undefined;
 
 export async function getActiveTrip(): Promise<Trip | null> {

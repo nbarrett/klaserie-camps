@@ -11,7 +11,7 @@ interface PersistedEntry {
 }
 
 const store = typeof window !== "undefined"
-  ? createStore("klaserie-cache", "react-query")
+  ? createStore("safari-track-cache", "react-query")
   : undefined;
 
 function queryHashKey(query: Query): string {

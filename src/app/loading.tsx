@@ -5,7 +5,7 @@ export default function Loading() {
     <main className="flex flex-1 flex-col items-center justify-center bg-brand-cream">
       <Image
         src="/logo-dark.jpg"
-        alt="Klaserie Camps"
+        alt="Safari Track"
         width={200}
         height={100}
         className="mb-6"

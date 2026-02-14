@@ -15,11 +15,11 @@ interface IdMapping {
 }
 
 const mutationStore = typeof window !== "undefined"
-  ? createStore("klaserie-mutations", "pending")
+  ? createStore("safari-track-mutations", "pending")
   : undefined;
 
 const idMapStore = typeof window !== "undefined"
-  ? createStore("klaserie-id-map", "entries")
+  ? createStore("safari-track-id-map", "entries")
   : undefined;
 
 function generateId(): string {

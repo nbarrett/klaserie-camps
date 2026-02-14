@@ -258,8 +258,6 @@ const REPTILES = [
 const ALL_SPECIES = [...MAMMALS, ...BIRDS, ...REPTILES];
 
 async function main() {
-  // Klaserie Camps operates three properties in the NW sector of
-  // Klaserie Private Nature Reserve (7,000ha traverse), Greater Kruger.
   const lodges = [
     {
       name: "Nzumba Camp",
@@ -292,23 +290,22 @@ async function main() {
     console.log(`Lodge created: ${lodge.name} (${lodge.latitude}, ${lodge.longitude})`);
   }
 
-  // Use Nzumba as the default lodge for the admin user
   const defaultLodge = createdLodges[0]!;
 
   const hashedPassword = await bcrypt.hash("admin123", 12);
   await prisma.user.upsert({
-    where: { email: "admin@klaserie.co.za" },
+    where: { email: "admin@safari-track.local" },
     update: {},
     create: {
       name: "Admin",
-      email: "admin@klaserie.co.za",
+      email: "admin@safari-track.local",
       hashedPassword,
       role: "ADMIN",
       lodgeId: defaultLodge.id,
     },
   });
 
-  console.log("Admin user created: admin@klaserie.co.za / admin123");
+  console.log("Admin user created: admin@safari-track.local / admin123");
 
   let created = 0;
   for (const species of ALL_SPECIES) {

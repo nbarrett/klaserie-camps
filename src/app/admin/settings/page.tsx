@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { api } from "~/trpc/react";
@@ -15,11 +15,14 @@ export default function AdminSettingsPage() {
 
   const strava = api.settings.getStrava.useQuery(undefined, {
     enabled: session?.user?.role === "ADMIN",
-    onSuccess: (data) => {
-      setClientId(data.clientId);
-      setClientSecret(data.clientSecret);
-    },
   });
+
+  useEffect(() => {
+    if (strava.data) {
+      setClientId(strava.data.clientId);
+      setClientSecret(strava.data.clientSecret);
+    }
+  }, [strava.data]);
 
   const save = api.settings.setStrava.useMutation({
     onSuccess: () => {

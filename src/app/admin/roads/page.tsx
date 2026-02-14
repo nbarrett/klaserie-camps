@@ -81,8 +81,9 @@ export default function AdminRoadsPage() {
   };
 
   return (
-    <PageBackdrop>
-      <div className="mx-auto max-w-2xl px-4 py-8">
+    <main className="relative min-h-screen">
+      <PageBackdrop />
+      <div className="relative z-10 mx-auto max-w-2xl px-4 py-8">
         <h1 className="mb-6 text-2xl font-bold text-white">Road Data</h1>
 
         {stats && (
@@ -120,6 +121,6 @@ export default function AdminRoadsPage() {
           </div>
         )}
       </div>
-    </PageBackdrop>
+    </main>
   );
 }

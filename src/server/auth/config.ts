@@ -24,16 +24,16 @@ export const authConfig = {
     CredentialsProvider({
       name: "credentials",
       credentials: {
-        email: { label: "Email", type: "email" },
+        name: { label: "Name", type: "text" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        if (!credentials?.name || !credentials?.password) {
           return null;
         }
 
-        const user = await db.user.findUnique({
-          where: { email: credentials.email as string },
+        const user = await db.user.findFirst({
+          where: { name: { equals: credentials.name as string, mode: "insensitive" } },
         });
 
         if (!user) {

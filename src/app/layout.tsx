@@ -12,7 +12,10 @@ import { SwProvider } from "~/app/_components/sw-provider";
 export const metadata: Metadata = {
   title: "Klaserie Camps",
   description: "GPS wildlife tracking for Klaserie Private Nature Reserve",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+  icons: [
+    { rel: "icon", url: "/favicon.ico" },
+    { rel: "apple-touch-icon", url: "/icon-192.png" },
+  ],
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,

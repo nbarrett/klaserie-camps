@@ -104,6 +104,12 @@ model ChecklistItem {
   @@unique([userId, speciesId])
 }
 
+model AppSettings {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  key   String @unique
+  value String
+}
+
 model StravaAccount {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   userId          String   @unique @db.ObjectId

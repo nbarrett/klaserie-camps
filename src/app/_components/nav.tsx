@@ -16,7 +16,8 @@ const NAV_ITEMS = [
   { href: "/checklist", label: "Checklist" },
   { href: "/drives", label: "History" },
   { href: "/strava", label: "Strava" },
-];
+  { href: "/admin/settings", label: "Settings", adminOnly: true },
+] as const;
 
 export function Nav() {
   const pathname = usePathname();
@@ -79,7 +80,7 @@ export function Nav() {
             <OfflineIndicator />
             <PrecacheIndicator />
             <div className="hidden items-center gap-2 lg:flex">
-              {NAV_ITEMS.map((item) => {
+              {NAV_ITEMS.filter((item) => !("adminOnly" in item && item.adminOnly) || session?.user?.role === "ADMIN").map((item) => {
                 const active =
                   item.href === "/"
                     ? pathname === "/"
@@ -156,7 +157,7 @@ export function Nav() {
             </div>
           )}
           <div className="flex flex-1 flex-col py-4">
-            {NAV_ITEMS.map((item) => {
+            {NAV_ITEMS.filter((item) => !("adminOnly" in item && item.adminOnly) || session?.user?.role === "ADMIN").map((item) => {
               const active =
                 item.href === "/"
                   ? pathname === "/"

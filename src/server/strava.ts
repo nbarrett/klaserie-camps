@@ -9,7 +9,17 @@ const STRAVA_API_BASE = "https://www.strava.com/api/v3";
 
 const TOKEN_REFRESH_BUFFER_SECONDS = 300;
 
-function requireStravaCredentials() {
+async function requireStravaCredentials() {
+  const rows = await db.appSettings.findMany({
+    where: { key: { in: ["strava_client_id", "strava_client_secret"] } },
+  });
+  const dbClientId = rows.find((r) => r.key === "strava_client_id")?.value;
+  const dbClientSecret = rows.find((r) => r.key === "strava_client_secret")?.value;
+
+  if (dbClientId && dbClientSecret) {
+    return { clientId: dbClientId, clientSecret: dbClientSecret };
+  }
+
   const clientId = env.STRAVA_CLIENT_ID;
   const clientSecret = env.STRAVA_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
@@ -51,8 +61,8 @@ export interface StravaActivitySummary {
   };
 }
 
-export function buildStravaAuthUrl(redirectUri: string, state: string): string {
-  const { clientId } = requireStravaCredentials();
+export async function buildStravaAuthUrl(redirectUri: string, state: string): Promise<string> {
+  const { clientId } = await requireStravaCredentials();
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
@@ -65,7 +75,7 @@ export function buildStravaAuthUrl(redirectUri: string, state: string): string {
 }
 
 export async function exchangeStravaCode(code: string): Promise<StravaTokenResponse> {
-  const { clientId, clientSecret } = requireStravaCredentials();
+  const { clientId, clientSecret } = await requireStravaCredentials();
   const response = await fetch(STRAVA_TOKEN_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -86,7 +96,7 @@ export async function exchangeStravaCode(code: string): Promise<StravaTokenRespo
 }
 
 async function refreshStravaToken(refreshToken: string): Promise<StravaTokenResponse> {
-  const { clientId, clientSecret } = requireStravaCredentials();
+  const { clientId, clientSecret } = await requireStravaCredentials();
   const response = await fetch(STRAVA_TOKEN_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

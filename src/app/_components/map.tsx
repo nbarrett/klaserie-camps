@@ -34,6 +34,7 @@ interface MapProps {
   photos?: PhotoMarker[];
   onMapClick?: (lat: number, lng: number) => void;
   showOverlay?: boolean;
+  showRoads?: boolean;
   className?: string;
   mapRef?: React.MutableRefObject<L.Map | null>;
 }
@@ -65,6 +66,7 @@ export function DriveMap({
   photos = [],
   onMapClick,
   showOverlay = false,
+  showRoads: showRoadsDefault = false,
   className = "h-full w-full",
   mapRef: externalMapRef,
 }: MapProps) {
@@ -75,7 +77,9 @@ export function DriveMap({
   const markersRef = useRef<L.Marker[]>([]);
   const photoMarkersRef = useRef<L.Marker[]>([]);
   const overlayRef = useRef<L.ImageOverlay | null>(null);
+  const roadsLayerRef = useRef<L.GeoJSON | null>(null);
   const [overlayVisible, setOverlayVisible] = useState(false);
+  const [roadsVisible, setRoadsVisible] = useState(showRoadsDefault);
 
   useEffect(() => {
     if (!containerRef.current || mapRefToUse.current) return;
@@ -105,6 +109,38 @@ export function DriveMap({
       )
       .addTo(map);
 
+    map.createPane("roads");
+    map.getPane("roads")!.style.zIndex = "350";
+
+    fetch("/data/roads.geojson")
+      .then((res) => res.json())
+      .then((data: GeoJSON.FeatureCollection) => {
+        const layer = L.geoJSON(data, {
+          pane: "roads",
+          style: (feature) => {
+            const hw = feature?.properties?.highway as string;
+            if (hw === "path") {
+              return { color: "#92400e", weight: 1.5, opacity: 0.5, dashArray: "6 4" };
+            }
+            if (hw === "service" || hw === "residential") {
+              return { color: "#78716c", weight: 1.5, opacity: 0.6 };
+            }
+            return { color: "#d97706", weight: 2, opacity: 0.7 };
+          },
+          onEachFeature: (_feature, layer) => {
+            const props = _feature.properties ?? {};
+            const parts: string[] = [];
+            if (props.name) parts.push(`<strong>${props.name as string}</strong>`);
+            if (props.surface) parts.push(`Surface: ${props.surface as string}`);
+            if (parts.length > 0) {
+              layer.bindPopup(parts.join("<br/>"));
+            }
+          },
+        });
+        roadsLayerRef.current = layer;
+      })
+      .catch(() => {});
+
     if (showOverlay) {
       overlayRef.current = L.imageOverlay(
         "/dundee-map-0.png",
@@ -131,6 +167,15 @@ export function DriveMap({
     if (!overlayRef.current) return;
     overlayRef.current.setOpacity(overlayVisible ? 0.7 : 0);
   }, [overlayVisible]);
+
+  useEffect(() => {
+    if (!mapRefToUse.current || !roadsLayerRef.current) return;
+    if (roadsVisible) {
+      roadsLayerRef.current.addTo(mapRefToUse.current);
+    } else {
+      roadsLayerRef.current.remove();
+    }
+  }, [roadsVisible]);
 
   useEffect(() => {
     if (!mapRefToUse.current) return;
@@ -197,6 +242,13 @@ export function DriveMap({
           {overlayVisible ? "Hide Reserve Map" : "Show Reserve Map"}
         </button>
       )}
+      <button
+        onClick={() => setRoadsVisible(!roadsVisible)}
+        className="absolute right-2 z-[1000] rounded bg-white px-2 py-1 text-xs font-medium shadow-md"
+        style={{ top: showOverlay ? "6.5rem" : "5rem" }}
+      >
+        {roadsVisible ? "Hide Roads" : "Show Roads"}
+      </button>
     </div>
   );
 }

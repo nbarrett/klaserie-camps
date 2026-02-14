@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { href: "/drives", label: "History" },
   { href: "/strava", label: "Strava" },
   { href: "/admin/species", label: "Species", adminOnly: true },
+  { href: "/admin/roads", label: "Roads", adminOnly: true },
   { href: "/admin/settings", label: "Settings", adminOnly: true },
 ] as const;
 

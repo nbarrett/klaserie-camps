@@ -18,18 +18,23 @@ export default function SignInPage() {
     setLoading(true);
     setError(null);
 
-    const result = await signIn("credentials", {
-      name,
-      password,
-      redirect: false,
-    });
+    try {
+      const result = await signIn("credentials", {
+        name,
+        password,
+        redirect: false,
+      });
 
-    if (result?.error) {
-      setError("Invalid name or password");
+      if (result?.error) {
+        setError("Invalid name or password");
+        setLoading(false);
+      } else {
+        router.push("/");
+        router.refresh();
+      }
+    } catch {
+      setError("Sign-in failed. Please try again.");
       setLoading(false);
-    } else {
-      router.push("/");
-      router.refresh();
     }
   };
 

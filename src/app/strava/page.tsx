@@ -37,8 +37,12 @@ function StravaContent() {
   const [importingId, setImportingId] = useState<number | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
 
-  const connectionStatus = api.strava.connectionStatus.useQuery(undefined, {
+  const stravaConfigured = api.settings.stravaConfigured.useQuery(undefined, {
     enabled: !!session,
+  });
+
+  const connectionStatus = api.strava.connectionStatus.useQuery(undefined, {
+    enabled: !!session && stravaConfigured.data?.configured === true,
   });
 
   const activities = api.strava.activities.useQuery(
@@ -99,7 +103,27 @@ function StravaContent() {
           </div>
         )}
 
-        {connectionStatus.isLoading ? (
+        {stravaConfigured.data?.configured === false ? (
+          <div className="rounded-lg bg-white/80 p-6 text-center shadow-sm backdrop-blur-sm">
+            {session.user.role === "ADMIN" ? (
+              <>
+                <p className="mb-4 text-brand-dark">
+                  Strava integration is not configured yet.
+                </p>
+                <a
+                  href="/admin/settings"
+                  className="inline-block rounded-md bg-brand-green px-6 py-3 text-sm font-semibold text-white transition hover:brightness-110"
+                >
+                  Configure Strava
+                </a>
+              </>
+            ) : (
+              <p className="text-brand-dark">
+                Strava integration is not available yet. Ask your administrator to set it up.
+              </p>
+            )}
+          </div>
+        ) : connectionStatus.isLoading ? (
           <p className="text-sm text-white/60">Checking Strava connection...</p>
         ) : connectionStatus.data?.connected ? (
           <>

@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   }
 
   const redirectUri = new URL("/api/strava/callback", request.url).toString();
-  const authorizeUrl = buildStravaAuthUrl(redirectUri, session.user.id);
+  const authorizeUrl = await buildStravaAuthUrl(redirectUri, session.user.id);
 
   return NextResponse.redirect(authorizeUrl);
 }

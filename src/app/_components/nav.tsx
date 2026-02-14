@@ -28,6 +28,12 @@ export function Nav() {
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
 
+  const handleSignOut = useCallback(async () => {
+    closeMenu();
+    await signOut({ redirect: false });
+    window.location.href = "/auth/signin";
+  }, [closeMenu]);
+
   useEffect(() => {
     closeMenu();
   }, [pathname, closeMenu]);
@@ -95,7 +101,7 @@ export function Nav() {
             </div>
           </div>
           <button
-            onClick={() => signOut({ callbackUrl: "/auth/signin" })}
+            onClick={() => void handleSignOut()}
             className="hidden rounded-md px-5 py-3 text-lg font-medium text-white/50 transition hover:text-white lg:block"
           >
             Sign Out
@@ -175,10 +181,7 @@ export function Nav() {
             <OfflineIndicator />
             <PrecacheIndicator />
             <button
-              onClick={() => {
-                closeMenu();
-                void signOut({ callbackUrl: "/auth/signin" });
-              }}
+              onClick={() => void handleSignOut()}
               className="text-lg font-medium text-white/50 transition hover:text-white"
             >
               Sign Out

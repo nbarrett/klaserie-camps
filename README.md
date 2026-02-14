@@ -24,7 +24,7 @@ The species checklist is also browsable by anyone without signing in.
 |---------|-------|
 | **Platform** | [Fly.io](https://fly.io) |
 | **Organisation** | `annix` (personal) |
-| **App name** | `klaserie-camps` |
+| **App name** | `safari-track` |
 | **Region** | `jnb` (Johannesburg) |
 | **CI/CD** | GitHub Actions |
 

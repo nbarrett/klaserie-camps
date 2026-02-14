@@ -13,7 +13,7 @@
 ## Project Overview
 
 - **Architecture**: T3 Stack - Next.js 15 (App Router) + tRPC 11 + Prisma (MongoDB Atlas) + NextAuth 5
-- **Repository**: https://github.com/nbarrett/klaserie-camps
+- **Repository**: https://github.com/nbarrett/safari-track
 - **Node.js**: >= 22
 - **Package Manager**: pnpm
 - **Deployment**: Fly.io (region: jnb, org: annix)

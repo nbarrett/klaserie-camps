@@ -72,7 +72,7 @@ jobs:
           sleep 15
 
           echo "Checking app responds..."
-          STATUS=$(curl -so /dev/null -w '%{http_code}' https://klaserie-camps.fly.dev/)
+          STATUS=$(curl -so /dev/null -w '%{http_code}' https://safari-track.fly.dev/)
           if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 500 ]; then
             echo "PASS: App responds with HTTP $STATUS"
           else
@@ -82,4 +82,4 @@ jobs:
 
       - name: Get logs on failure
         if: failure()
-        run: flyctl logs -a klaserie-camps --no-tail 2>&1 | tail -100 || echo "Could not fetch logs"
+        run: flyctl logs -a safari-track --no-tail 2>&1 | tail -100 || echo "Could not fetch logs"

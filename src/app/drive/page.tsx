@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import type L from "leaflet";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { api } from "~/trpc/react";
@@ -14,6 +14,7 @@ import { useOfflineMutation } from "~/lib/use-offline-mutation";
 import { generateTempId, enqueue } from "~/lib/offline-queue";
 import { getLocalDrive, setLocalDrive, clearLocalDrive, addLocalRoutePoints } from "~/lib/drive-store";
 import { getActiveTrip, addDriveToTrip, setActiveTrip, type TripSpecies } from "~/lib/trip-store";
+import { haversineDistance } from "~/lib/drive-stats";
 
 const DriveMap = dynamic(
   () => import("~/app/_components/map").then((mod) => mod.DriveMap),
@@ -43,6 +44,11 @@ function formatDuration(seconds: number): string {
   return hrs > 0
     ? `${pad(hrs)}:${pad(mins)}:${pad(secs)}`
     : `${pad(mins)}:${pad(secs)}`;
+}
+
+function formatDistance(metres: number, unit: string): string {
+  if (unit === "mi") return `${(metres / 1609.344).toFixed(1)} mi`;
+  return `${(metres / 1000).toFixed(1)} km`;
 }
 
 function useDriveElapsed(startedAt: Date | string | null) {
@@ -179,6 +185,22 @@ export default function DrivePage() {
   const elapsed = useDriveElapsed(driveSession?.startedAt ?? localStartedAt);
   const existingRoute = (driveSession?.route ?? []) as unknown as GpsPoint[];
   const allRoutePoints = [...existingRoute, ...routePoints];
+
+  const userProfile = api.user.me.useQuery(undefined, {
+    enabled: status === "authenticated",
+  });
+  const distanceUnit = userProfile.data?.distanceUnit ?? "km";
+
+  const totalDistanceM = useMemo(() => {
+    let d = 0;
+    for (let i = 1; i < allRoutePoints.length; i++) {
+      d += haversineDistance(
+        allRoutePoints[i - 1]!.lat, allRoutePoints[i - 1]!.lng,
+        allRoutePoints[i]!.lat, allRoutePoints[i]!.lng,
+      );
+    }
+    return d;
+  }, [allRoutePoints]);
 
   const sightingMarkers = (driveSession?.sightings ?? []).map((s) => ({
     id: s.id,
@@ -467,8 +489,8 @@ export default function DrivePage() {
                       <div className="text-xs text-brand-khaki">Sightings</div>
                     </div>
                     <div>
-                      <div className="text-lg font-bold text-brand-dark">{allRoutePoints.length}</div>
-                      <div className="text-xs text-brand-khaki">Points</div>
+                      <div className="text-lg font-bold text-brand-dark">{formatDistance(totalDistanceM, distanceUnit)}</div>
+                      <div className="text-xs text-brand-khaki">Distance</div>
                     </div>
                   </div>
                 </div>
@@ -566,6 +588,10 @@ export default function DrivePage() {
               <div className="flex items-center justify-between text-sm">
                 <span className="text-brand-khaki">Duration</span>
                 <span className="font-mono font-semibold text-brand-dark">{formatDuration(elapsed)}</span>
+              </div>
+              <div className="mt-1 flex items-center justify-between text-sm">
+                <span className="text-brand-khaki">Distance</span>
+                <span className="font-semibold text-brand-dark">{formatDistance(totalDistanceM, distanceUnit)}</span>
               </div>
               <div className="mt-1 flex items-center justify-between text-sm">
                 <span className="text-brand-khaki">Sightings</span>

@@ -52,7 +52,7 @@ export default function ChecklistPage() {
       category: activeCategory === "All" ? undefined : activeCategory,
       spottedOnly: showSpottedOnly,
     },
-    { enabled: !!session },
+    { enabled: !!session, retry: 2, retryDelay: 1000 },
   );
 
   const speciesList = api.species.byCategory.useQuery(
@@ -96,20 +96,24 @@ export default function ChecklistPage() {
     );
   }
 
+  const hasError = session && checklist.isError;
+
+  const fallbackItems = (activeCategory === "All" ? allSpecies.data : speciesList.data)?.map(
+    (s) => ({
+      speciesId: s.id,
+      commonName: s.commonName,
+      scientificName: s.scientificName,
+      category: s.category,
+      family: s.family,
+      imageUrl: s.imageUrl,
+      spotted: false,
+      sightingCount: 0,
+    }),
+  ) ?? [];
+
   const rawItems = session
-    ? (checklist.data ?? [])
-    : (activeCategory === "All" ? allSpecies.data : speciesList.data)?.map(
-        (s) => ({
-          speciesId: s.id,
-          commonName: s.commonName,
-          scientificName: s.scientificName,
-          category: s.category,
-          family: s.family,
-          imageUrl: s.imageUrl,
-          spotted: false,
-          sightingCount: 0,
-        }),
-      ) ?? [];
+    ? (checklist.data ?? (hasError ? fallbackItems : []))
+    : fallbackItems;
 
   const filteredItems = rawItems.filter((item) =>
     searchQuery.length > 0
@@ -134,7 +138,7 @@ export default function ChecklistPage() {
   );
 
   const isLoading = session
-    ? checklist.isLoading
+    ? checklist.isLoading && !checklist.isError
     : activeCategory === "All"
       ? allSpecies.isLoading
       : speciesList.isLoading;
@@ -148,9 +152,19 @@ export default function ChecklistPage() {
           {/* Sticky header section */}
           <div className="shrink-0 border-b border-brand-cream/60 p-4 sm:p-6 sm:pb-4">
             <div className="flex items-center justify-between">
-              <h1 className="text-xl font-bold text-brand-dark">
-                Wildlife Checklist
-              </h1>
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-cream text-brand-khaki transition hover:bg-brand-cream/80"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </Link>
+                <h1 className="text-xl font-bold text-brand-dark">
+                  Wildlife Checklist
+                </h1>
+              </div>
               {isGuest && (
                 <Link
                   href="/auth/signin"
@@ -305,6 +319,17 @@ export default function ChecklistPage() {
           {/* Scrollable species list */}
           <div className="flex-1 overflow-y-auto p-4 sm:px-6">
             <div className="space-y-4">
+              {hasError && (
+                <div className="flex items-center justify-between rounded-lg bg-red-50 px-4 py-3">
+                  <span className="text-sm text-red-600">Could not load your checklist</span>
+                  <button
+                    onClick={() => void checklist.refetch()}
+                    className="rounded-lg bg-red-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-red-700"
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
               {isLoading ? (
                 <p className="text-sm text-brand-khaki">Loading checklist...</p>
               ) : thumbSize === "xl" && filteredItems.length > 0 ? (

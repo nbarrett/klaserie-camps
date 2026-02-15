@@ -20,6 +20,7 @@ model User {
   email          String           @unique
   hashedPassword String
   role           Role             @default(GUIDE)
+  distanceUnit   String           @default("km")
   lodgeId        String           @db.ObjectId
   lodge          Lodge            @relation(fields: [lodgeId], references: [id])
   driveSessions  DriveSession[]

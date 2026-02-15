@@ -34,6 +34,16 @@ interface DrivePhoto {
   caption: string | null;
 }
 
+function formatDistanceWithUnit(km: number, unit: string): string {
+  if (unit === "mi") return `${(km / 1.609344).toFixed(1)} mi`;
+  return `${km.toFixed(1)} km`;
+}
+
+function formatSpeedWithUnit(kmh: number, unit: string): string {
+  if (unit === "mi") return `${(kmh / 1.609344).toFixed(1)} mph`;
+  return `${kmh.toFixed(1)} km/h`;
+}
+
 export default function DriveDetailPage() {
   const params = useParams();
   const { data: session, status } = useSession();
@@ -42,6 +52,10 @@ export default function DriveDetailPage() {
   const [selectedPhoto, setSelectedPhoto] = useState<DrivePhoto | null>(null);
 
   const drive = api.drive.detail.useQuery({ id: driveId });
+  const userProfile = api.user.me.useQuery(undefined, {
+    enabled: status === "authenticated",
+  });
+  const distanceUnit = userProfile.data?.distanceUnit ?? "km";
 
   if (status === "loading") {
     return <div className="flex min-h-screen items-center justify-center text-brand-khaki">Loading...</div>;
@@ -139,10 +153,10 @@ export default function DriveDetailPage() {
 
           {stats.totalDistanceKm > 0 && (
             <div className="mt-3 flex flex-wrap gap-4">
-              <StatBadge label="Distance" value={`${stats.totalDistanceKm.toFixed(1)} km`} />
+              <StatBadge label="Distance" value={formatDistanceWithUnit(stats.totalDistanceKm, distanceUnit)} />
               <StatBadge label="Duration" value={formatDuration(stats.durationMinutes)} />
-              <StatBadge label="Avg Speed" value={`${stats.avgSpeedKmh.toFixed(1)} km/h`} />
-              <StatBadge label="Max Speed" value={`${stats.maxSpeedKmh.toFixed(0)} km/h`} />
+              <StatBadge label="Avg Speed" value={formatSpeedWithUnit(stats.avgSpeedKmh, distanceUnit)} />
+              <StatBadge label="Max Speed" value={formatSpeedWithUnit(stats.maxSpeedKmh, distanceUnit)} />
               <StatBadge label="Sightings" value={`${stats.sightingsCount}`} />
             </div>
           )}

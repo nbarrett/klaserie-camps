@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { href: "/drive", label: "Drive", authOnly: true },
   { href: "/checklist", label: "Checklist" },
   { href: "/drives", label: "History", authOnly: true },
+  { href: "/profile", label: "Profile", authOnly: true },
   { href: "/strava", label: "Strava", authOnly: true },
   { href: "/admin/species", label: "Species", adminOnly: true },
   { href: "/admin/roads", label: "Roads", adminOnly: true },
@@ -123,7 +124,7 @@ export function Nav() {
               <PrecacheIndicator />
               <button
                 onClick={() => setMenuOpen(true)}
-                className="p-2 text-white"
+                className="rounded-full bg-black/30 p-2 text-white backdrop-blur-sm"
                 aria-label="Open menu"
               >
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">

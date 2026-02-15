@@ -278,7 +278,7 @@ export default function DrivePage() {
       />
 
       {isActive && (
-        <div className="absolute left-1/2 top-0 z-[1000] flex w-full max-w-lg -translate-x-1/2 items-center justify-center gap-6 rounded-b-2xl bg-brand-dark/80 px-4 py-3 backdrop-blur-sm">
+        <div className="absolute left-1/2 top-0 z-[1000] flex w-full max-w-lg -translate-x-1/2 items-center justify-center gap-6 rounded-b-2xl bg-brand-dark/80 px-4 py-3 pt-[calc(0.75rem+env(safe-area-inset-top)+3rem)] backdrop-blur-sm lg:pt-3">
           <div className="flex items-center gap-2">
             <div className={`h-3 w-3 rounded-full ${tracking ? "animate-pulse bg-brand-green" : "bg-brand-gold"}`} />
             <span className="text-sm font-medium text-white">

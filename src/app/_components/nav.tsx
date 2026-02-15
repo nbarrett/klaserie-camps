@@ -133,6 +133,37 @@ export function Nav() {
         </div>
       </nav>
 
+      {hideMobileBar && (
+        <nav className="fixed left-0 right-0 top-0 z-50 border-b border-white/10 bg-brand-brown/95 pt-[env(safe-area-inset-top)] backdrop-blur-sm lg:hidden">
+          <div className="flex items-center justify-between px-4 py-1">
+            <Link href="/" className="flex-shrink-0">
+              <Image
+                src="/logo-icon.png"
+                alt="Safari Track"
+                width={240}
+                height={112}
+                className="h-10 w-auto"
+              />
+            </Link>
+            <div className="flex items-center gap-3">
+              <OfflineIndicator />
+              <PrecacheIndicator />
+              <button
+                onClick={() => setMenuOpen(true)}
+                className="p-2 text-white"
+                aria-label="Open menu"
+              >
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <line x1="3" y1="12" x2="21" y2="12" />
+                  <line x1="3" y1="18" x2="21" y2="18" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </nav>
+      )}
+
       {!hideMobileBar && (
         <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-brand-brown/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm lg:hidden">
           <div className="flex items-center justify-between px-4 py-1">

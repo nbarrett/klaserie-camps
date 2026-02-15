@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   description: "GPS-tracked game drives and wildlife sighting logs",
   icons: [
     { rel: "icon", url: "/favicon.ico" },
-    { rel: "apple-touch-icon", url: "/icon-192.png" },
+    { rel: "apple-touch-icon", url: "/apple-touch-icon.png", sizes: "180x180" },
   ],
   manifest: "/manifest.webmanifest",
   appleWebApp: {

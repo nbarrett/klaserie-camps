@@ -15,11 +15,21 @@ interface LocalSighting {
   notes?: string;
 }
 
+export interface QuickSpeciesSummary {
+  speciesId: string;
+  commonName: string;
+  category: string;
+  imageUrl: string | null;
+  count: number;
+  lastSightedAt: number;
+}
+
 export interface LocalDrive {
   id: string;
   startedAt: string;
   routePoints: GpsPoint[];
   sightings: LocalSighting[];
+  speciesSummary?: QuickSpeciesSummary[];
 }
 
 const DRIVE_KEY = "active-drive";
@@ -55,5 +65,13 @@ export async function addLocalSighting(sighting: LocalSighting): Promise<void> {
   const drive = await getLocalDrive();
   if (!drive) return;
   drive.sightings = [...drive.sightings, sighting];
+  await set(DRIVE_KEY, drive, driveStore);
+}
+
+export async function setSpeciesSummary(summary: QuickSpeciesSummary[]): Promise<void> {
+  if (!driveStore) return;
+  const drive = await getLocalDrive();
+  if (!drive) return;
+  drive.speciesSummary = summary;
   await set(DRIVE_KEY, drive, driveStore);
 }

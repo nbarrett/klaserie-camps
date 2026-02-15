@@ -1,6 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
+import type L from "leaflet";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
@@ -79,6 +81,9 @@ export default function DrivePage() {
   const [hasActiveTrip, setHasActiveTrip] = useState(false);
   const [panelExpanded, setPanelExpanded] = useState(false);
   const [localSightingCount, setLocalSightingCount] = useState(0);
+  const [routeOverview, setRouteOverview] = useState(false);
+  const [showFinishModal, setShowFinishModal] = useState(false);
+  const mapRef = useRef<L.Map | null>(null);
 
   const utils = api.useUtils();
 
@@ -88,6 +93,11 @@ export default function DrivePage() {
         setLocalDriveId(drive.id);
         setLocalStartedAt(drive.startedAt);
         setRoutePoints(drive.routePoints);
+        if (drive.speciesSummary && drive.speciesSummary.length > 0) {
+          setInitialQuickSpecies(drive.speciesSummary);
+          const total = drive.speciesSummary.reduce((sum, s) => sum + s.count, 0);
+          setLocalSightingCount(total);
+        }
       }
     });
     void getActiveTrip().then((trip) => {
@@ -101,6 +111,7 @@ export default function DrivePage() {
 
   const startDriveMutation = api.drive.start.useMutation();
   const endDriveMutation = api.drive.end.useMutation();
+  const discardDriveMutation = api.drive.discard.useMutation();
   const addRoutePointsMutation = api.drive.addRoutePoints.useMutation();
 
   const sendingRef = useRef(false);
@@ -156,11 +167,12 @@ export default function DrivePage() {
     [offlineAddRoutePoints],
   );
 
-  const { tracking, error: gpsError, currentPosition, startTracking, stopTracking } =
+  const { tracking, autoPaused, error: gpsError, currentPosition, startTracking, stopTracking } =
     useGpsTracker({
       intervalMs: 10000,
       driveId,
       onPoints: handleGpsPoints,
+      autoPause: true,
     });
 
   const driveSession = activeDrive.data;
@@ -176,6 +188,8 @@ export default function DrivePage() {
     count: s.count,
     notes: s.notes,
   }));
+
+  const totalSightingCount = Math.max(sightingMarkers.length, localSightingCount);
 
   if (status === "loading") {
     return <div className="flex flex-1 items-center justify-center text-brand-khaki">Loading...</div>;
@@ -254,9 +268,52 @@ export default function DrivePage() {
 
   const handleEndDrive = () => {
     stopTracking();
+    setShowFinishModal(true);
+  };
+
+  const handleSaveDrive = () => {
+    setShowFinishModal(false);
     const id = driveSession?.id ?? localDriveId;
     if (id) {
       offlineEndDrive.mutate({ id });
+    }
+  };
+
+  const handleDiscardDrive = () => {
+    setShowFinishModal(false);
+    const id = driveSession?.id ?? localDriveId;
+    if (id) {
+      discardDriveMutation.mutate(
+        { id },
+        {
+          onSuccess: () => {
+            setRoutePoints([]);
+            setMutationError(null);
+            setLocalDriveId(null);
+            setLocalStartedAt(null);
+            setInitialQuickSpecies([]);
+            void clearLocalDrive();
+            void clearPersistedBuffer();
+            void utils.drive.active.invalidate();
+            void utils.drive.list.invalidate();
+          },
+          onError: () => {
+            setRoutePoints([]);
+            setLocalDriveId(null);
+            setLocalStartedAt(null);
+            setInitialQuickSpecies([]);
+            void clearLocalDrive();
+            void clearPersistedBuffer();
+          },
+        },
+      );
+    } else {
+      setRoutePoints([]);
+      setLocalDriveId(null);
+      setLocalStartedAt(null);
+      setInitialQuickSpecies([]);
+      void clearLocalDrive();
+      void clearPersistedBuffer();
     }
   };
 
@@ -275,27 +332,22 @@ export default function DrivePage() {
         sightings={sightingMarkers}
         currentPosition={currentPosition}
         className="h-full w-full"
+        compactControls
+        showRoads
+        mapRef={mapRef}
       />
 
-      {isActive && (
-        <div className="absolute left-1/2 top-0 z-[1000] flex w-full max-w-lg -translate-x-1/2 items-center justify-center gap-6 rounded-b-2xl bg-brand-dark/80 px-4 py-3 pt-[calc(0.75rem+env(safe-area-inset-top)+3rem)] backdrop-blur-sm lg:pt-3">
-          <div className="flex items-center gap-2">
-            <div className={`h-3 w-3 rounded-full ${tracking ? "animate-pulse bg-brand-green" : "bg-brand-gold"}`} />
-            <span className="text-sm font-medium text-white">
-              {tracking ? "On Drive" : "Paused"}
-            </span>
-          </div>
-          <div className="font-mono text-3xl font-bold tabular-nums text-white">
-            {formatDuration(elapsed)}
-          </div>
-          <div className="flex items-center gap-4 text-sm text-white/70">
-            <span>{sightingMarkers.length} sightings</span>
-            <span>{allRoutePoints.length} pts</span>
-          </div>
-        </div>
-      )}
+      <Link
+        href="/"
+        className="absolute left-3 z-[1000] flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-lg transition active:scale-95"
+        style={{ top: "calc(env(safe-area-inset-top) + 0.75rem)" }}
+      >
+        <svg className="h-5 w-5 text-brand-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </Link>
 
-      <div className="absolute bottom-0 left-1/2 z-[1000] w-full max-w-lg -translate-x-1/2 px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+      <div className="absolute bottom-0 left-1/2 z-[1000] w-full max-w-lg -translate-x-1/2 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
         {isActive && !starting && (driveSession?.id ?? localDriveId) && (
           <div className="mb-3">
             {!panelExpanded && (
@@ -309,7 +361,7 @@ export default function DrivePage() {
                   </svg>
                 </div>
                 <span className="flex-1 text-left text-sm font-semibold text-brand-dark">
-                  {localSightingCount > 0 ? `${localSightingCount} sightings` : `${sightingMarkers.length} sightings`}
+                  {totalSightingCount} sightings
                 </span>
                 <svg className="h-5 w-5 text-brand-khaki" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
@@ -376,55 +428,98 @@ export default function DrivePage() {
               <span className="text-sm font-medium text-brand-dark">Starting game drive...</span>
             </div>
           ) : (
-            <div className="rounded-2xl bg-white/95 p-3 shadow-xl backdrop-blur-sm">
-              <div className="flex items-center gap-3">
+            <>
+              <div className="rounded-2xl bg-white/95 p-4 shadow-xl backdrop-blur-sm">
+                <div className="mb-3 flex items-end justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <div className="font-mono text-3xl font-bold tabular-nums text-brand-dark">
+                        {formatDuration(elapsed)}
+                      </div>
+                      <button
+                        onClick={() => {
+                          if (!mapRef.current || allRoutePoints.length === 0) return;
+                          if (routeOverview) {
+                            setRouteOverview(false);
+                            if (currentPosition) {
+                              mapRef.current.setView([currentPosition.lat, currentPosition.lng], 15);
+                            }
+                          } else {
+                            setRouteOverview(true);
+                            const bounds = allRoutePoints.map((p) => [p.lat, p.lng] as [number, number]);
+                            mapRef.current.fitBounds(bounds, { padding: [40, 40] });
+                          }
+                        }}
+                        className={`flex h-8 w-8 items-center justify-center rounded-lg transition active:scale-95 ${routeOverview ? "bg-brand-brown text-white" : "bg-brand-cream text-brand-khaki"}`}
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="text-xs font-medium text-brand-khaki">
+                      {autoPaused ? "Auto-paused" : tracking ? "Recording" : "Paused"}
+                    </div>
+                  </div>
+                  <div className="flex gap-6 text-right">
+                    <div>
+                      <div className="text-lg font-bold text-brand-dark">{totalSightingCount}</div>
+                      <div className="text-xs text-brand-khaki">Sightings</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-bold text-brand-dark">{allRoutePoints.length}</div>
+                      <div className="text-xs text-brand-khaki">Points</div>
+                    </div>
+                  </div>
+                </div>
                 {tracking ? (
                   <button
                     onClick={stopTracking}
-                    className="flex flex-1 flex-col items-center gap-1.5 rounded-xl bg-brand-gold/20 py-3 transition active:scale-95"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-gold py-3.5 shadow-md transition active:scale-[0.98]"
                   >
-                    <svg className="h-6 w-6 text-brand-dark" fill="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                       <rect x="6" y="4" width="4" height="16" rx="1" />
                       <rect x="14" y="4" width="4" height="16" rx="1" />
                     </svg>
-                    <span className="text-xs font-semibold text-brand-dark">Pause</span>
+                    <span className="text-sm font-bold text-white">Pause</span>
                   </button>
                 ) : (
                   <button
                     onClick={startTracking}
-                    className="flex flex-1 flex-col items-center gap-1.5 rounded-xl bg-brand-green py-3 shadow-md transition active:scale-95"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-green py-3.5 shadow-md transition active:scale-[0.98]"
                   >
-                    <svg className="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M8 5v14l11-7z" />
                     </svg>
-                    <span className="text-xs font-bold text-white">Resume</span>
+                    <span className="text-sm font-bold text-white">Resume</span>
                   </button>
                 )}
-
-                <button
-                  onClick={() => setShowTripSummary(true)}
-                  className="flex flex-1 flex-col items-center gap-1.5 rounded-xl bg-brand-gold/15 py-3 transition active:scale-95"
-                >
-                  <svg className="h-6 w-6 text-brand-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                  <span className="text-xs font-semibold text-brand-gold">Trip</span>
-                </button>
-
-                <button
-                  onClick={handleEndDrive}
-                  disabled={offlineEndDrive.isPending}
-                  className="flex flex-1 flex-col items-center gap-1.5 rounded-xl bg-red-600 py-3 shadow-md transition active:scale-95 disabled:opacity-50"
-                >
-                  <svg className="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                    <rect x="4" y="4" width="16" height="16" rx="2" />
-                  </svg>
-                  <span className="text-xs font-bold text-white">
-                    {offlineEndDrive.isPending ? "Ending..." : "Finish"}
-                  </span>
-                </button>
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={() => setShowTripSummary(true)}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-brand-gold/15 py-2.5 transition active:scale-95"
+                  >
+                    <svg className="h-4 w-4 text-brand-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    <span className="text-xs font-semibold text-brand-gold">Trip</span>
+                  </button>
+                  <button
+                    onClick={handleEndDrive}
+                    disabled={offlineEndDrive.isPending}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-red-600/10 py-2.5 transition active:scale-95 disabled:opacity-50"
+                  >
+                    <svg className="h-4 w-4 text-red-600" fill="currentColor" viewBox="0 0 24 24">
+                      <rect x="4" y="4" width="16" height="16" rx="2" />
+                    </svg>
+                    <span className="text-xs font-semibold text-red-600">
+                      {offlineEndDrive.isPending ? "Ending..." : "Finish"}
+                    </span>
+                  </button>
+                </div>
               </div>
-            </div>
+
+            </>
           )}
         </div>
       </div>
@@ -451,6 +546,56 @@ export default function DrivePage() {
               </button>
               <button
                 onClick={() => setShowStartModal(false)}
+                className="text-sm text-brand-khaki"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showFinishModal && (
+        <div className="absolute inset-0 z-[2000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="mx-6 w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-brand-dark">Finish Drive</h3>
+            <p className="mt-2 text-sm text-brand-khaki">
+              Would you like to save this activity or discard it?
+            </p>
+            <div className="mt-2 rounded-lg bg-brand-cream/50 p-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-brand-khaki">Duration</span>
+                <span className="font-mono font-semibold text-brand-dark">{formatDuration(elapsed)}</span>
+              </div>
+              <div className="mt-1 flex items-center justify-between text-sm">
+                <span className="text-brand-khaki">Sightings</span>
+                <span className="font-semibold text-brand-dark">{totalSightingCount}</span>
+              </div>
+              <div className="mt-1 flex items-center justify-between text-sm">
+                <span className="text-brand-khaki">Route points</span>
+                <span className="font-semibold text-brand-dark">{allRoutePoints.length}</span>
+              </div>
+            </div>
+            <div className="mt-6 flex flex-col gap-3">
+              <button
+                onClick={handleSaveDrive}
+                disabled={offlineEndDrive.isPending}
+                className="w-full rounded-xl bg-brand-green py-3 text-sm font-bold text-white transition active:scale-95 disabled:opacity-50"
+              >
+                {offlineEndDrive.isPending ? "Saving..." : "Save Activity"}
+              </button>
+              <button
+                onClick={handleDiscardDrive}
+                disabled={discardDriveMutation.isPending}
+                className="w-full rounded-xl bg-red-600/10 py-3 text-sm font-bold text-red-600 transition active:scale-95 disabled:opacity-50"
+              >
+                {discardDriveMutation.isPending ? "Discarding..." : "Discard"}
+              </button>
+              <button
+                onClick={() => {
+                  setShowFinishModal(false);
+                  startTracking();
+                }}
                 className="text-sm text-brand-khaki"
               >
                 Cancel

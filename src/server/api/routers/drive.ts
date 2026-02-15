@@ -35,6 +35,17 @@ export const driveRouter = createTRPCRouter({
       });
     }),
 
+  discard: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.sighting.deleteMany({
+        where: { driveSessionId: input.id },
+      });
+      return ctx.db.driveSession.delete({
+        where: { id: input.id },
+      });
+    }),
+
   addRoutePoints: protectedProcedure
     .input(
       z.object({

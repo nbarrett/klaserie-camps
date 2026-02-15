@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "~/trpc/react";
 import { PageBackdrop } from "~/app/_components/page-backdrop";
+import { getLocalDrive } from "~/lib/drive-store";
 
 interface HomeContentProps {
   userName: string;
@@ -10,6 +12,11 @@ interface HomeContentProps {
 
 export function HomeContent({ userName }: HomeContentProps) {
   const activeDrive = api.drive.active.useQuery();
+  const [hasLocalDrive, setHasLocalDrive] = useState(false);
+
+  useEffect(() => {
+    void getLocalDrive().then((drive) => setHasLocalDrive(!!drive));
+  }, []);
   const recentSightings = api.sighting.recent.useQuery({ limit: 5 });
   const recentDrives = api.drive.list.useQuery({ limit: 5 });
   const lodge = api.lodge.mine.useQuery();
@@ -18,7 +25,7 @@ export function HomeContent({ userName }: HomeContentProps) {
     <main className="relative min-h-screen">
       <PageBackdrop />
 
-      <div className="relative z-10 mx-auto max-w-3xl px-4 pb-8 pt-8 sm:px-6 lg:px-8">
+      <div className="relative z-10 mx-auto max-w-3xl px-4 pb-8 pt-4 sm:px-6 lg:px-8 lg:pt-8">
         <div className="mb-6">
           <h1 className="text-xl font-bold text-white drop-shadow-md">Welcome back, {userName}</h1>
           {lodge.data && (
@@ -28,7 +35,7 @@ export function HomeContent({ userName }: HomeContentProps) {
           )}
         </div>
 
-        {activeDrive.data ? (
+        {activeDrive.data || hasLocalDrive ? (
           <Link
             href="/drive"
             className="mb-6 block rounded-lg border border-brand-gold/30 bg-brand-brown/90 p-4 text-white shadow-lg backdrop-blur-sm"
@@ -37,7 +44,9 @@ export function HomeContent({ userName }: HomeContentProps) {
               Active Drive
             </div>
             <div className="mt-1 text-lg font-semibold">
-              {activeDrive.data.sightings.length} sightings recorded
+              {activeDrive.data
+                ? `${activeDrive.data.sightings.length} sightings recorded`
+                : "Return to Drive"}
             </div>
             <div className="mt-2 text-sm text-brand-cream/80">Tap to continue tracking</div>
           </Link>

@@ -13,6 +13,7 @@ interface GpsTrackerOptions {
   intervalMs?: number;
   driveId?: string | null;
   onPoints: (points: GpsPoint[]) => void;
+  autoPause?: boolean;
 }
 
 const GPS_BUFFER_KEY = "gps-route-buffer";
@@ -23,6 +24,8 @@ const gpsStore = typeof window !== "undefined"
 const MAX_ACCURACY_M = 30;
 const MIN_DISTANCE_M = 5;
 const MAX_SPEED_MS = 33;
+const AUTO_PAUSE_AFTER_MS = 15_000;
+const AUTO_RESUME_DISTANCE_M = 10;
 
 function haversineMetres(
   lat1: number, lng1: number,
@@ -54,8 +57,9 @@ export async function clearPersistedBuffer() {
   await set(GPS_BUFFER_KEY, [], gpsStore);
 }
 
-export function useGpsTracker({ intervalMs = 5000, driveId, onPoints }: GpsTrackerOptions) {
+export function useGpsTracker({ intervalMs = 5000, driveId, onPoints, autoPause = false }: GpsTrackerOptions) {
   const [tracking, setTracking] = useState(false);
+  const [autoPaused, setAutoPaused] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPosition, setCurrentPosition] = useState<GpsPoint | null>(null);
   const bufferRef = useRef<GpsPoint[]>([]);
@@ -65,6 +69,9 @@ export function useGpsTracker({ intervalMs = 5000, driveId, onPoints }: GpsTrack
   onPointsRef.current = onPoints;
 
   const lastAcceptedRef = useRef<{ lat: number; lng: number; time: number } | null>(null);
+  const lastMovementRef = useRef<number>(Date.now());
+  const autoPauseRef = useRef(autoPause);
+  autoPauseRef.current = autoPause;
 
   useEffect(() => {
     if (!driveId) return;
@@ -83,7 +90,9 @@ export function useGpsTracker({ intervalMs = 5000, driveId, onPoints }: GpsTrack
 
     setError(null);
     setTracking(true);
+    setAutoPaused(false);
     lastAcceptedRef.current = null;
+    lastMovementRef.current = Date.now();
 
     watchIdRef.current = navigator.geolocation.watchPosition(
       (position) => {
@@ -101,10 +110,23 @@ export function useGpsTracker({ intervalMs = 5000, driveId, onPoints }: GpsTrack
         const last = lastAcceptedRef.current;
         if (last) {
           const dist = haversineMetres(last.lat, last.lng, latitude, longitude);
+
+          if (autoPauseRef.current) {
+            if (dist >= AUTO_RESUME_DISTANCE_M) {
+              lastMovementRef.current = now;
+              setAutoPaused(false);
+            } else if (now - lastMovementRef.current > AUTO_PAUSE_AFTER_MS) {
+              setAutoPaused(true);
+              return;
+            }
+          }
+
           if (dist < MIN_DISTANCE_M) return;
 
           const dt = (now - last.time) / 1000;
           if (dt > 0 && dist / dt > MAX_SPEED_MS) return;
+        } else {
+          lastMovementRef.current = now;
         }
 
         const point: GpsPoint = {
@@ -168,5 +190,5 @@ export function useGpsTracker({ intervalMs = 5000, driveId, onPoints }: GpsTrack
     };
   }, []);
 
-  return { tracking, error, currentPosition, startTracking, stopTracking };
+  return { tracking, autoPaused, error, currentPosition, startTracking, stopTracking };
 }

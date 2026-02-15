@@ -38,6 +38,7 @@ interface MapProps {
   currentPosition?: { lat: number; lng: number } | null;
   className?: string;
   mapRef?: React.MutableRefObject<L.Map | null>;
+  compactControls?: boolean;
 }
 
 const PHOTO_ICON = L.divIcon({
@@ -52,6 +53,13 @@ const SIGHTING_ICON = L.divIcon({
   html: `<div style="background:#ef4444;width:12px;height:12px;border-radius:50%;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3)"></div>`,
   iconSize: [16, 16],
   iconAnchor: [8, 8],
+});
+
+const POSITION_ICON = L.divIcon({
+  className: "position-marker",
+  html: `<div style="position:relative;width:28px;height:28px"><div style="position:absolute;inset:0;border-radius:50%;background:rgba(59,130,246,0.15);animation:position-pulse 2s ease-out infinite"></div><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;background:#3b82f6;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.35)"></div></div>`,
+  iconSize: [28, 28],
+  iconAnchor: [14, 14],
 });
 
 const DUNDEE_OVERLAY_BOUNDS: L.LatLngBoundsExpression = [
@@ -71,6 +79,7 @@ export function DriveMap({
   currentPosition,
   className = "h-full w-full",
   mapRef: externalMapRef,
+  compactControls = false,
 }: MapProps) {
   const internalMapRef = useRef<L.Map | null>(null);
   const mapRefToUse = externalMapRef ?? internalMapRef;
@@ -78,6 +87,7 @@ export function DriveMap({
   const polylineRef = useRef<L.Polyline | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
   const photoMarkersRef = useRef<L.Marker[]>([]);
+  const positionMarkerRef = useRef<L.Marker | null>(null);
   const overlayRef = useRef<L.ImageOverlay | null>(null);
   const roadsLayerRef = useRef<L.GeoJSON | null>(null);
   const osmLayerRef = useRef<L.TileLayer | null>(null);
@@ -85,6 +95,8 @@ export function DriveMap({
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [roadsVisible, setRoadsVisible] = useState(showRoadsDefault);
   const [satelliteActive, setSatelliteActive] = useState(false);
+  const roadsVisibleRef = useRef(roadsVisible);
+  roadsVisibleRef.current = roadsVisible;
 
   useEffect(() => {
     if (!containerRef.current || mapRefToUse.current) return;
@@ -137,6 +149,9 @@ export function DriveMap({
           },
         });
         roadsLayerRef.current = layer;
+        if (roadsVisibleRef.current) {
+          layer.addTo(map);
+        }
       })
       .catch(() => {});
 
@@ -241,6 +256,27 @@ export function DriveMap({
       });
   }, [photos]);
 
+  useEffect(() => {
+    if (!mapRefToUse.current) return;
+
+    if (!currentPosition) {
+      if (positionMarkerRef.current) {
+        positionMarkerRef.current.remove();
+        positionMarkerRef.current = null;
+      }
+      return;
+    }
+
+    if (positionMarkerRef.current) {
+      positionMarkerRef.current.setLatLng([currentPosition.lat, currentPosition.lng]);
+    } else {
+      positionMarkerRef.current = L.marker([currentPosition.lat, currentPosition.lng], {
+        icon: POSITION_ICON,
+        zIndexOffset: 1000,
+      }).addTo(mapRefToUse.current);
+    }
+  }, [currentPosition]);
+
   const handleLocate = () => {
     if (!mapRefToUse.current || !currentPosition) return;
     mapRefToUse.current.setView([currentPosition.lat, currentPosition.lng], 16);
@@ -249,39 +285,83 @@ export function DriveMap({
   return (
     <div className="relative h-full w-full">
       <div ref={containerRef} className={className} />
-      <div className="absolute right-2 top-2 z-[1000] flex flex-col gap-1.5">
-        <button
-          onClick={() => setSatelliteActive(!satelliteActive)}
-          className="rounded bg-white px-2 py-1 text-xs font-medium shadow-md"
-        >
-          {satelliteActive ? "Street" : "Satellite"}
-        </button>
-        {showOverlay && (
+      {compactControls ? (
+        <div className="absolute right-3 z-[1000] flex flex-col gap-2" style={{ top: "calc(env(safe-area-inset-top) + 0.75rem)" }}>
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg">
+            <svg className="h-9 w-9" viewBox="0 0 40 40" fill="none">
+              <polygon points="20,4 17.5,9 22.5,9" fill="#1f2937" />
+              <polygon points="20,36 22.5,31 17.5,31" fill="#ef4444" />
+              <line x1="35" y1="20" x2="32" y2="20" stroke="#d1d5db" strokeWidth="1.5" strokeLinecap="round" />
+              <line x1="5" y1="20" x2="8" y2="20" stroke="#d1d5db" strokeWidth="1.5" strokeLinecap="round" />
+              <line x1="31" y1="9" x2="28.5" y2="11.5" stroke="#d1d5db" strokeWidth="1.2" strokeLinecap="round" />
+              <line x1="9" y1="9" x2="11.5" y2="11.5" stroke="#d1d5db" strokeWidth="1.2" strokeLinecap="round" />
+              <line x1="31" y1="31" x2="28.5" y2="28.5" stroke="#d1d5db" strokeWidth="1.2" strokeLinecap="round" />
+              <line x1="9" y1="31" x2="11.5" y2="28.5" stroke="#d1d5db" strokeWidth="1.2" strokeLinecap="round" />
+              <text x="20" y="24" textAnchor="middle" fontSize="13" fontWeight="700" fontFamily="system-ui,-apple-system,sans-serif" fill="#1f2937">N</text>
+            </svg>
+          </div>
           <button
-            onClick={() => setOverlayVisible(!overlayVisible)}
-            className="rounded bg-white px-2 py-1 text-xs font-medium shadow-md"
+            onClick={() => setSatelliteActive(!satelliteActive)}
+            className={`flex h-10 w-10 items-center justify-center rounded-full shadow-lg transition active:scale-95 ${satelliteActive ? "bg-brand-brown text-white" : "bg-white/90 text-brand-dark"}`}
           >
-            {overlayVisible ? "Hide Reserve" : "Reserve Map"}
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5a17.92 17.92 0 01-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+            </svg>
           </button>
-        )}
-        <button
-          onClick={() => setRoadsVisible(!roadsVisible)}
-          className="rounded bg-white px-2 py-1 text-xs font-medium shadow-md"
-        >
-          {roadsVisible ? "Hide Roads" : "Roads"}
-        </button>
-        {currentPosition && (
+          <button
+            onClick={() => setRoadsVisible(!roadsVisible)}
+            className={`flex h-10 w-10 items-center justify-center rounded-full shadow-lg transition active:scale-95 ${roadsVisible ? "bg-brand-brown text-white" : "bg-white/90 text-brand-dark"}`}
+          >
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 3v18M15 3v18M3 9h18M3 15h18" />
+            </svg>
+          </button>
           <button
             onClick={handleLocate}
-            className="flex items-center justify-center rounded bg-white p-1.5 shadow-md"
+            disabled={!currentPosition}
+            className={`flex h-10 w-10 items-center justify-center rounded-full shadow-lg transition active:scale-95 ${currentPosition ? "bg-white/90" : "bg-white/50"}`}
           >
-            <svg className="h-4 w-4 text-brand-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className={`h-5 w-5 ${currentPosition ? "text-brand-dark" : "text-brand-khaki/50"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <circle cx="12" cy="12" r="3" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v4m0 12v4m10-10h-4M6 12H2" />
             </svg>
           </button>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="absolute right-2 top-2 z-[1000] flex flex-col gap-1.5">
+          <button
+            onClick={() => setSatelliteActive(!satelliteActive)}
+            className="rounded bg-white px-2 py-1 text-xs font-medium shadow-md"
+          >
+            {satelliteActive ? "Street" : "Satellite"}
+          </button>
+          {showOverlay && (
+            <button
+              onClick={() => setOverlayVisible(!overlayVisible)}
+              className="rounded bg-white px-2 py-1 text-xs font-medium shadow-md"
+            >
+              {overlayVisible ? "Hide Reserve" : "Reserve Map"}
+            </button>
+          )}
+          <button
+            onClick={() => setRoadsVisible(!roadsVisible)}
+            className="rounded bg-white px-2 py-1 text-xs font-medium shadow-md"
+          >
+            {roadsVisible ? "Hide Roads" : "Roads"}
+          </button>
+          {currentPosition && (
+            <button
+              onClick={handleLocate}
+              className="flex items-center justify-center rounded bg-white p-1.5 shadow-md"
+            >
+              <svg className="h-4 w-4 text-brand-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <circle cx="12" cy="12" r="3" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v4m0 12v4m10-10h-4M6 12H2" />
+              </svg>
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

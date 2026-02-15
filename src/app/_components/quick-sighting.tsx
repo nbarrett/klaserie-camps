@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "~/trpc/react";
 import { useOfflineMutation } from "~/lib/use-offline-mutation";
 import { updateTripSpecies } from "~/lib/trip-store";
-import { addLocalSighting } from "~/lib/drive-store";
+import { addLocalSighting, setSpeciesSummary } from "~/lib/drive-store";
 import { generateTempId } from "~/lib/offline-queue";
 import { OfflineImage } from "~/app/_components/offline-image";
 
@@ -46,6 +46,15 @@ export function QuickSightingPanel({
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [longPressTarget, setLongPressTarget] = useState<string | null>(null);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const initialRef = useRef(true);
+
+  useEffect(() => {
+    if (initialRef.current) {
+      initialRef.current = false;
+      return;
+    }
+    void setSpeciesSummary(quickSpecies);
+  }, [quickSpecies]);
 
   const allSpecies = api.species.list.useQuery(undefined, {
     staleTime: 24 * 60 * 60 * 1000,
